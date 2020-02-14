@@ -9,11 +9,17 @@
   <version>0.9</version>
   <packaging>pom</packaging>
 
+  <url>https://github.com/asbestian/production-problem</url>
+
   <modules>
     <module>input</module>
     <module>optimisation</module>
     <module>runner</module>
   </modules>
+
+  <properties>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+  </properties>
 
   <build>
     <pluginManagement>
