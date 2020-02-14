@@ -5,7 +5,7 @@ is described in [problem\_description.pdf](./problem_description.pdf)
 
 Folders
 --------
-[graph_optimisation](./graph-optimisation) - contains code which uses a graph algorithmic approach for the production planning
+[graph_optimisation](./graph-optimisation) - contains code which uses a graph algorithmic approach for the production planning problem
 
 [instances](./instances) - contains instance files
 
