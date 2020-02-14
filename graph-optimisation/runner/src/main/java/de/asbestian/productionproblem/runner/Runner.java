@@ -31,12 +31,12 @@ public class Runner implements Callable<Integer> {
       + "instance.")
   private String file;
 
-  @Option(names = "-e, --edgeTreshold",
+  @Option(names = "--edges",
       description = "The maximal number of edges each subgraph can have.")
   private int edgeThreshold = 200;
 
-  @Option(names = "-i, --iterations", description = "The maximal number of iterations.")
-  private int iterations = 1000;
+  @Option(names = "--iterations", description = "The maximal number of iterations.")
+  private int iterations = 15;
 
   public static void main(String... args) {
     int exitCode = new CommandLine(new Runner()).execute(args);
@@ -55,22 +55,30 @@ public class Runner implements Callable<Integer> {
     problem.build();
     final Schedule initSchedule = problem.computeInitialSchedule();
     System.out.println("Initial schedule: " + initSchedule);
-    System.out.println("Initial cost: " + initSchedule.getCost());
+    System.out.println(
+        "Initial cost: " + initSchedule.getCost() +
+            " (changeover cost = " + initSchedule.getChangeOverCost()
+            + ", inventory cost = " + initSchedule.getInventoryCost() + ")");
+    System.out.println();
     final Graph<Vertex, DefaultEdge> resGraph = problem.getResidualGraph(initSchedule);
     final SubGraphGenerator subGraphGenerator = new RandomEdgeRemover(edgeThreshold,
         resGraph);
     Optional<Schedule> min = subGraphGenerator.generate()
         .limit(iterations)
         .map(Problem::computeCycles)
-        .peek(cycles -> System.out.println("Number of cycles: " + cycles.size()))
+        .peek(cycles -> System.out.println("Checking |cycles| =  " + cycles.size()))
         .flatMap(Collection::stream)
         .map(cycle -> initSchedule.compute(cycle, input))
         .filter(schedule -> schedule.getCost() < initSchedule.getCost())
         .min(Comparator.comparing(Schedule::getCost));
     if (min.isPresent()) {
       final Schedule schedule = min.get();
-      System.out.println("New best schedule: " + schedule);
-      System.out.println("Best cost: " + schedule.getCost());
+      System.out.println("\nBest found schedule: " + schedule);
+      System.out.println(
+          "Best found cost: " + schedule.getCost() +
+              " (changeover cost = " + schedule.getChangeOverCost()
+              + ", inventory cost = " + schedule.getInventoryCost() + ")");
+      System.out.println();
     }
     return 0;
   }

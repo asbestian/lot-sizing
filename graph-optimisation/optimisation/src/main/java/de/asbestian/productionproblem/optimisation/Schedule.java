@@ -43,7 +43,7 @@ public class Schedule {
             });
     // needs to be called after schedule has been generated
     this.changeOverCost = computeChangeoverCost(this.schedule, input);
-    this.inventoryCost = computeInventoryCost(input);
+    this.inventoryCost = computeInventoryCost(this.usedEdges, input.getInventoryCost());
   }
 
   private Schedule(
@@ -71,10 +71,19 @@ public class Schedule {
     return cost;
   }
 
-  private static double computeInventoryCost(final Input input) {
-    final double cost = 0.;
-    // ToDo
-    return cost;
+  private static double computeInventoryCost(final Collection<Pair<Vertex, Vertex>> usedEdges,
+      int inventoryCost) {
+    return usedEdges.stream()
+        .filter(pair -> pair.getFirst().getClass() == DemandVertex.class
+            && pair.getSecond().getClass() == DecisionVertex.class)
+        .mapToInt(pair -> {
+          final DemandVertex source = (DemandVertex) pair.getFirst();
+          final DecisionVertex target = (DecisionVertex) pair.getSecond();
+          assert source.getType() == target.getType();
+          assert source.getTimeSlot() <= target.getTimeSlot();
+          return source.getTimeSlot() - target.getTimeSlot();
+        })
+        .sum() * inventoryCost;
   }
 
   public double getChangeOverCost() {
@@ -110,7 +119,7 @@ public class Schedule {
         .getActivatedDecisionVertices()
         .forEach(vertex -> schedule[vertex.getTimeSlot()] = vertex.getType());
     final double changeOverCost = computeChangeoverCost(schedule, input);
-    final double inventoryCost = computeInventoryCost(input);
+    final double inventoryCost = computeInventoryCost(usedEdges, input.getInventoryCost());
     return new Schedule(usedEdges, schedule, changeOverCost, inventoryCost);
   }
 
