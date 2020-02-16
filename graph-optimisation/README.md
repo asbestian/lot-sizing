@@ -2,6 +2,8 @@ About
 -----
 This Java implementation solves the [production planning problem](../problem_description.pdf) via a graph algorithmic approach based on enumerating directed cycles in a residual graph which represents all feasible schedules.
 
+An outline of the approach can be found in [doc/graph-optimisation.pdf](doc/graph-optimisation.pdf).
+
 Compilation & Execution
 -----------------------
 
