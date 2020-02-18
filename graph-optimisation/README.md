@@ -6,7 +6,7 @@ Compilation & Execution
 -----------------------
 
 1. `cd graph-optimisation`
-2. `mvn clean package`
+2. `mvn package`
 3. `java -jar runner/target/graph-opt-jar-with-dependencies.jar problem_file.txt`
 
 To see available command line arguments execute `java -jar runner/target/graph-opt-jar-with-dependencies.jar -h`
