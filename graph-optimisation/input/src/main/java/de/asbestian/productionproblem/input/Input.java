@@ -5,6 +5,8 @@ import java.io.FileReader;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.stream.Collectors;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * This class handles the file input. An example input looks like:
@@ -23,12 +25,14 @@ import java.util.stream.Collectors;
  */
 public class Input {
 
+  private final Logger LOGGER = LoggerFactory.getLogger(Input.class);
+
   private int numTimeSlots;
   private int numTypes;
   private int inventoryCost;
   private final ArrayList<ArrayList<Integer>> demand;
   private final ArrayList<ArrayList<Integer>> changeover_cost;
-  private ArrayList<Integer> numProducedTypeItems;
+  private ArrayList<Integer> overallDemandPerType;
 
   public Input() {
     demand = new ArrayList<>();
@@ -38,20 +42,24 @@ public class Input {
   public void read(final String file) {
     try (BufferedReader bf = new BufferedReader(new FileReader(file))) {
       numTimeSlots = readSingleValueLine(bf.readLine());
+      LOGGER.info("Number of time slots: {}", numTimeSlots);
       numTypes = readSingleValueLine(bf.readLine());
+      LOGGER.info("Number of types: {}", numTypes);
       for (int type = 0; type < numTypes; ++type) {
         ArrayList<Integer> type_demand = readMultipleValueLine(bf.readLine());
         assert type_demand.size() == numTimeSlots;
         demand.add(type_demand);
       }
       inventoryCost = readSingleValueLine(bf.readLine());
+      LOGGER.info("Inventory cost: {}", inventoryCost);
       for (int type = 0; type < numTypes; ++type) {
         ArrayList<Integer> cost = readMultipleValueLine(bf.readLine());
         assert cost.size() == numTypes;
         changeover_cost.add(cost);
       }
-      numProducedTypeItems = computeNumProducedTypeItems();
-    } catch (Exception e) {
+      overallDemandPerType = computeNumProducedTypeItems();
+      LOGGER.info("Overall demand per type: {}", overallDemandPerType);
+    } catch (final Exception e) {
       e.printStackTrace();
     }
   }
@@ -86,21 +94,19 @@ public class Input {
     return inventoryCost;
   }
 
-  public int getNumProducedTypeItems(final int type) {
-    return numProducedTypeItems.get(type);
+  public int getOverallDemandPerType(final int type) {
+    return overallDemandPerType.get(type);
   }
 
   public int getNumProducedItems() {
-    return numProducedTypeItems.stream().mapToInt(i -> i).sum();
+    return overallDemandPerType.stream().mapToInt(i -> i).sum();
   }
 
   public ArrayList<Integer> getDemand(final int type) {
     return demand.get(type);
   }
 
-  /**
-   * Returns the change over cost from predType to succType;
-   */
+  /** Returns the change over cost from predType to succType; */
   public int getChangeOverCost(int predType, int succType) {
     return changeover_cost.get(predType).get(succType);
   }
