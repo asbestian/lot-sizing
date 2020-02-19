@@ -14,25 +14,27 @@ import java.util.Optional;
 import java.util.concurrent.Callable;
 import org.jgrapht.Graph;
 import org.jgrapht.graph.DefaultEdge;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import picocli.CommandLine;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.Parameters;
 
-
-/**
- * @author Sebastian Schenker
- */
-@Command(name = "graph-opt", mixinStandardHelpOptions = true, version = "0.9",
+/** @author Sebastian Schenker */
+@Command(
+    name = "graph-opt",
+    mixinStandardHelpOptions = true,
+    version = "0.9",
     description = "Production planning optimisation via graph algorithms.")
 public class Runner implements Callable<Integer> {
 
-  @Parameters(paramLabel = "file", description = "The file containing the problem "
-      + "instance.")
+  private final Logger LOGGER = LoggerFactory.getLogger(Runner.class);
+
+  @Parameters(paramLabel = "file", description = "The file containing the problem " + "instance.")
   private String file;
 
-  @Option(names = "--edges",
-      description = "The maximal number of edges each subgraph can have.")
+  @Option(names = "--edges", description = "The maximal number of edges each subgraph can have.")
   private int edgeThreshold = 200;
 
   @Option(names = "--iterations", description = "The maximal number of iterations.")
@@ -54,34 +56,36 @@ public class Runner implements Callable<Integer> {
     final Problem problem = new Problem(input);
     problem.build();
     final Schedule initSchedule = problem.computeInitialSchedule();
-    System.out.println("Initial schedule: " + initSchedule);
-    System.out.println(
-        "Initial cost: " + initSchedule.getCost() +
-            " (changeover cost = " + initSchedule.getChangeOverCost()
-            + ", inventory cost = " + initSchedule.getInventoryCost() + ")");
-    System.out.println();
+    LOGGER.info("Initial schedule: {}", initSchedule);
+    LOGGER.info(
+        "Initial cost: {} (changeover cost = {}, inventory cost = {})",
+        initSchedule.getCost(),
+        initSchedule.getChangeOverCost(),
+        initSchedule.getInventoryCost());
     final Graph<Vertex, DefaultEdge> resGraph = problem.getResidualGraph(initSchedule);
-    final SubGraphGenerator subGraphGenerator = new RandomEdgeRemover(edgeThreshold,
-        resGraph);
-    Optional<Schedule> min = subGraphGenerator.generate()
-        .limit(iterations)
-        .map(Problem::computeCycles)
-        .peek(cycles -> System.out.println("Checking |cycles| =  " + cycles.size()))
-        .flatMap(Collection::stream)
-        .map(cycle -> initSchedule.compute(cycle, input))
-        .filter(schedule -> schedule.getCost() < initSchedule.getCost())
-        .min(Comparator.comparing(Schedule::getCost));
-    if (min.isPresent()) {
-      final Schedule schedule = min.get();
-      System.out.println("\nBest found schedule: " + schedule);
-      System.out.println(
-          "Best found cost: " + schedule.getCost() +
-              " (changeover cost = " + schedule.getChangeOverCost()
-              + ", inventory cost = " + schedule.getInventoryCost() + ")");
-      System.out.println();
-    }
+    final SubGraphGenerator subGraphGenerator = new RandomEdgeRemover(edgeThreshold, resGraph);
+    Optional<Schedule> minSchedule =
+        subGraphGenerator
+            .generate()
+            .limit(iterations)
+            .map(Problem::computeCycles)
+            .peek(cycles -> LOGGER.info("Number of investigated cycles: {}", cycles.size()))
+            .flatMap(Collection::stream)
+            .map(cycle -> initSchedule.compute(cycle, input))
+            .filter(schedule -> schedule.getCost() < initSchedule.getCost())
+            .min(Comparator.comparing(Schedule::getCost));
+
+    final Schedule bestSchedule = minSchedule.orElse(initSchedule);
+    System.out.println("\nBest found schedule: " + bestSchedule);
+    System.out.println(
+        "Best found cost: "
+            + bestSchedule.getCost()
+            + " (changeover cost = "
+            + bestSchedule.getChangeOverCost()
+            + ", inventory cost = "
+            + bestSchedule.getInventoryCost()
+            + ")");
+    System.out.println();
     return 0;
   }
-
 }
-

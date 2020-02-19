@@ -1,7 +1,6 @@
 package de.asbestian.productionproblem.optimisation;
 
 import de.asbestian.productionproblem.input.Input;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -15,6 +14,8 @@ import org.jgrapht.alg.flow.PushRelabelMFImpl;
 import org.jgrapht.alg.util.Pair;
 import org.jgrapht.graph.DefaultEdge;
 import org.jgrapht.graph.builder.GraphTypeBuilder;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Graph representing the production problem based on the file input.
@@ -34,6 +35,7 @@ import org.jgrapht.graph.builder.GraphTypeBuilder;
  */
 public class Problem {
 
+  private final Logger LOGGER = LoggerFactory.getLogger(Problem.class);
   private final Input input;
   private final IdSupplier idSupplier;
   private final Graph<Vertex, DefaultEdge> graph;
@@ -41,7 +43,6 @@ public class Problem {
   private final DemandVertex[] demandVertices;
   private final Map<Pair<Integer, Integer>, DecisionVertex> decisionVertices;
   private final TimeSlotVertex[] timeSlotVertices;
-  private final Collection<DefaultEdge> edgesBetweenDemandAndDecisionVertices;
 
   public Problem(final Input input) {
     this.input = input;
@@ -52,7 +53,6 @@ public class Problem {
     this.demandVertices = new DemandVertex[input.getNumProducedItems()];
     this.decisionVertices = new HashMap<>();
     this.timeSlotVertices = new TimeSlotVertex[input.getNumTimeSlots()];
-    this.edgesBetweenDemandAndDecisionVertices = new ArrayList<>();
   }
 
   public static Graph<Vertex, DefaultEdge> buildEmptyGraph() {
@@ -88,9 +88,7 @@ public class Problem {
     return resGraph;
   }
 
-  /**
-   * Computes a schedule based on the maximum flow of the graph.
-   */
+  /** Computes a schedule based on the maximum flow of the graph. */
   public Schedule computeInitialSchedule() {
     // add super source and connect it to demand vertices
     final var superSource = new Vertex(idSupplier.get());
@@ -106,7 +104,9 @@ public class Problem {
     final var maxFlow = maxFlowFinder.getMaximumFlow(superSource, superSink);
     if (maxFlow.getValue() != demandVertices.length) {
       throw new GraphException(
-          "Computed max flow value: " + maxFlow.getValue() + "; Expected max flow value: "
+          "Computed max flow value: "
+              + maxFlow.getValue()
+              + "; Expected max flow value: "
               + demandVertices.length);
     }
     // remove super source and corresponding edges
@@ -117,24 +117,22 @@ public class Problem {
   public static <E> List<Cycle> computeCycles(final Graph<Vertex, E> graph) {
     final var cycleFinder = new JohnsonSimpleCycles<>(graph);
     final List<List<Vertex>> cycles = cycleFinder.findSimpleCycles();
-    return cycles.stream()
-        .map(vertices -> new Cycle(vertices, graph))
-        .collect(Collectors.toList());
+    return cycles.stream().map(vertices -> new Cycle(vertices, graph)).collect(Collectors.toList());
   }
 
   private void addDemandVertices() {
-    int index = 0;
+    int counter = 0;
     for (int type = 0; type < input.getNumTypes(); ++type) {
       final var demand = input.getDemand(type);
       for (int slot = 0; slot < input.getNumTimeSlots(); ++slot) {
         if (demand.get(slot) == 1) {
           final var demandVertex = new DemandVertex(idSupplier.get(), type, slot);
-          demandVertices[index++] = demandVertex;
+          demandVertices[counter++] = demandVertex;
           graph.addVertex(demandVertex);
         }
       }
     }
-    assert index == input.getNumProducedItems();
+    LOGGER.info("Number of added demand vertices: {}", counter);
   }
 
   private void addDecisionVertices() {
@@ -145,6 +143,7 @@ public class Problem {
         graph.addVertex(decisionVertex);
       }
     }
+    LOGGER.info("Number of added decision vertices: {}", decisionVertices.size());
   }
 
   private void addTimeSlotVertices() {
@@ -153,6 +152,7 @@ public class Problem {
       timeSlotVertices[slot] = timeSlotVertex;
       graph.addVertex(timeSlotVertex);
     }
+    LOGGER.info("Number of added time slot vertices: {}", timeSlotVertices.length);
   }
 
   private void addVertices() {
@@ -170,7 +170,6 @@ public class Problem {
               slot -> {
                 final var edge =
                     graph.addEdge(demandVertex, decisionVertices.get(Pair.of(type, slot)));
-                edgesBetweenDemandAndDecisionVertices.add(edge);
               });
     }
   }
