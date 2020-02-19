@@ -6,6 +6,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import org.jgrapht.Graph;
@@ -34,6 +35,16 @@ import org.slf4j.LoggerFactory;
  * @author Sebastian Schenker
  */
 public class Problem {
+
+  private static class IdSupplier implements Supplier<Integer> {
+
+    private int id = 0;
+
+    @Override
+    public Integer get() {
+      return id++;
+    }
+  }
 
   private final Logger LOGGER = LoggerFactory.getLogger(Problem.class);
   private final Input input;
