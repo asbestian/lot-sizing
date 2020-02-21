@@ -1,5 +1,6 @@
 package de.asbestian.productionproblem.optimisation;
 
+import de.asbestian.productionproblem.optimisation.Vertex.Type;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -58,7 +59,8 @@ public class Cycle {
    * otherwise, false.
    */
   private boolean isActivatingEdge(final Vertex source, final Vertex target) {
-    return source.getClass() == DemandVertex.class && target.getClass() == DecisionVertex.class;
+    return source.getVertexType() == Type.DEMAND_VERTEX
+        && target.getVertexType() == Type.DECISION_VERTEX;
   }
 
   /**
@@ -69,7 +71,8 @@ public class Cycle {
    * @return true if source corresponds to decision vertex and target corresponds to demand vertex;
    */
   private boolean isDeactivatingEdge(final Vertex source, final Vertex target) {
-    return source.getClass() == DecisionVertex.class && target.getClass() == DemandVertex.class;
+    return source.getVertexType() == Type.DECISION_VERTEX
+        && target.getVertexType() == Type.DEMAND_VERTEX;
   }
 
   /**
@@ -77,9 +80,12 @@ public class Cycle {
    * vertex, b) a decision vertex to a time slot vertex or c) a time slot vertex to the super sink.
    */
   private boolean isOriginalEdge(final Vertex source, final Vertex target) {
-    return source.getClass() == DemandVertex.class && target.getClass() == DecisionVertex.class
-        || source.getClass() == DecisionVertex.class && target.getClass() == TimeSlotVertex.class
-        || source.getClass() == TimeSlotVertex.class && target.getClass() == SuperSink.class;
+    return source.getVertexType() == Type.DEMAND_VERTEX
+        && target.getVertexType() == Type.DECISION_VERTEX
+        || source.getVertexType() == Type.DECISION_VERTEX
+        && target.getVertexType() == Type.TIME_SLOT_VERTEX
+        || source.getVertexType() == Type.TIME_SLOT_VERTEX
+        && target.getVertexType() == Type.SUPER_SINK;
   }
 
   public List<Pair<Vertex, Vertex>> getOriginalGraphEdges() {

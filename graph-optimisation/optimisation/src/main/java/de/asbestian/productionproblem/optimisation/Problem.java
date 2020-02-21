@@ -99,10 +99,12 @@ public class Problem {
     return resGraph;
   }
 
-  /** Computes a schedule based on the maximum flow of the graph. */
+  /**
+   * Computes a schedule based on the maximum flow of the graph.
+   */
   public Schedule computeInitialSchedule() {
     // add super source and connect it to demand vertices
-    final var superSource = new Vertex(idSupplier.get());
+    final var superSource = new SuperSink(idSupplier.get());
     graph.addVertex(superSource);
     for (final var demandVertex : demandVertices) {
       graph.addEdge(superSource, demandVertex);

@@ -1,39 +1,19 @@
 package de.asbestian.productionproblem.optimisation;
 
-import java.util.Objects;
-
 /**
  * The vertex types for the considered graph.
  *
  * @author Sebastian Schenker
  */
-public class Vertex {
+public interface Vertex {
 
-  private final int id;
-
-  public Vertex(final int id) {
-    this.id = id;
+  enum Type {
+    DEMAND_VERTEX,
+    DECISION_VERTEX,
+    TIME_SLOT_VERTEX,
+    SUPER_SINK
   }
 
-  @Override
-  public boolean equals(final Object o) {
-    if (this == o) {
-      return true;
-    }
-    if (!(o instanceof Vertex)) {
-      return false;
-    }
-    final var v = (Vertex) o;
-    return v.id == this.id;
-  }
+  Vertex.Type getVertexType();
 
-  @Override
-  public int hashCode() {
-    return Objects.hashCode(id);
-  }
-
-  @Override
-  public String toString() {
-    return String.valueOf(id);
-  }
 }
