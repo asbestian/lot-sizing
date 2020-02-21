@@ -1,6 +1,7 @@
 package de.asbestian.productionproblem.optimisation;
 
 import de.asbestian.productionproblem.input.Input;
+import de.asbestian.productionproblem.optimisation.Vertex.Type;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
@@ -34,8 +35,8 @@ public class Schedule {
           return Pair.of(source, target);
         })
         .peek(usedEdges::add)
-        .filter(pair -> pair.getFirst().getClass() == DemandVertex.class
-            && pair.getSecond().getClass() == DecisionVertex.class)
+        .filter(pair -> pair.getFirst().getVertexType() == Type.DEMAND_VERTEX
+            && pair.getSecond().getVertexType() == Type.DECISION_VERTEX)
         .forEach(
             pair -> {
               final var decisionVertex = (DecisionVertex) pair.getSecond();
@@ -74,8 +75,8 @@ public class Schedule {
   private static double computeInventoryCost(final Collection<Pair<Vertex, Vertex>> usedEdges,
       int inventoryCost) {
     return usedEdges.stream()
-        .filter(pair -> pair.getFirst().getClass() == DemandVertex.class
-            && pair.getSecond().getClass() == DecisionVertex.class)
+        .filter(pair -> pair.getFirst().getVertexType() == Type.DEMAND_VERTEX
+            && pair.getSecond().getVertexType() == Type.DECISION_VERTEX)
         .mapToInt(pair -> {
           final DemandVertex source = (DemandVertex) pair.getFirst();
           final DecisionVertex target = (DecisionVertex) pair.getSecond();
