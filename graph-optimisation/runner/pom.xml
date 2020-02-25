@@ -26,6 +26,12 @@
     </dependency>
 
     <dependency>
+      <groupId>de.asbestian.productionproblem</groupId>
+      <artifactId>visualisation</artifactId>
+      <version>0.9</version>
+    </dependency>
+
+    <dependency>
       <groupId>info.picocli</groupId>
       <artifactId>picocli</artifactId>
       <version>4.2.0</version>

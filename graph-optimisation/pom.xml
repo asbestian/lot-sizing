@@ -15,6 +15,7 @@
     <module>input</module>
     <module>optimisation</module>
     <module>runner</module>
+    <module>visualisation</module>
   </modules>
 
   <properties>

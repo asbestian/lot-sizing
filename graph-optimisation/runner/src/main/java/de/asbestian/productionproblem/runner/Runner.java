@@ -6,6 +6,7 @@ import de.asbestian.productionproblem.optimisation.RandomEdgeRemover;
 import de.asbestian.productionproblem.optimisation.Schedule;
 import de.asbestian.productionproblem.optimisation.SubGraphGenerator;
 import de.asbestian.productionproblem.optimisation.Vertex;
+import de.asbestian.productionproblem.visualisation.GraphVisualisation;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.Collection;
@@ -55,6 +56,14 @@ public class Runner implements Callable<Integer> {
     input.read(file);
     final Problem problem = new Problem(input);
     problem.build();
+    final GraphVisualisation visualisation =
+        new GraphVisualisation(
+            "Types: " + input.getNumTypes() + " TimeSlots: " + input.getNumTimeSlots());
+    visualisation.visualiseVertices(
+        problem.getDemandVertices(),
+        problem.getDecisionVertices(),
+        problem.getTimeSlotVertices(),
+        problem.getSuperSink());
     final Schedule initSchedule = problem.computeInitialSchedule();
     LOGGER.info("Initial schedule: {}", initSchedule);
     LOGGER.info(
@@ -86,6 +95,10 @@ public class Runner implements Callable<Integer> {
             + bestSchedule.getInventoryCost()
             + ")");
     System.out.println();
+    try {
+      System.in.read();
+    } catch (Exception e) {
+    }
     return 0;
   }
 }
