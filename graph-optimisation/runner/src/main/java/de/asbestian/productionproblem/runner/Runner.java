@@ -6,6 +6,7 @@ import de.asbestian.productionproblem.optimisation.RandomEdgeRemover;
 import de.asbestian.productionproblem.optimisation.Schedule;
 import de.asbestian.productionproblem.optimisation.SubGraphGenerator;
 import de.asbestian.productionproblem.optimisation.Vertex;
+import de.asbestian.productionproblem.visualisation.Visualisation;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.Collection;
@@ -62,6 +63,8 @@ public class Runner implements Callable<Integer> {
         initSchedule.getCost(),
         initSchedule.getChangeOverCost(),
         initSchedule.getInventoryCost());
+    final Visualisation initScheduleVis = getScheduleVis(problem, initSchedule);
+    initScheduleVis.saveToJPG("initSchedule.jpg");
     final Graph<Vertex, DefaultEdge> resGraph = problem.getResidualGraph(initSchedule);
     final SubGraphGenerator subGraphGenerator = new RandomEdgeRemover(edgeThreshold, resGraph);
     Optional<Schedule> minSchedule =
@@ -76,6 +79,9 @@ public class Runner implements Callable<Integer> {
             .min(Comparator.comparing(Schedule::getCost));
 
     final Schedule bestSchedule = minSchedule.orElse(initSchedule);
+    assert initSchedule.getUsedEdges().size() == bestSchedule.getUsedEdges().size();
+    final Visualisation bestScheduleVis = getScheduleVis(problem, bestSchedule);
+    bestScheduleVis.saveToJPG("bestSchedule.jpg");
     System.out.println("\nBest found schedule: " + bestSchedule);
     System.out.println(
         "Best found cost: "
@@ -86,6 +92,21 @@ public class Runner implements Callable<Integer> {
             + bestSchedule.getInventoryCost()
             + ")");
     System.out.println();
+    try {
+      System.in.read();
+    } catch (Exception e) {
+    }
     return 0;
+  }
+
+  private Visualisation getScheduleVis(final Problem problem, final Schedule schedule) {
+    final Visualisation visualisation = new Visualisation();
+    visualisation.addVertices(
+        problem.getDemandVertices(),
+        problem.getDecisionVertices(),
+        problem.getTimeSlotVertices(),
+        problem.getSuperSink());
+    visualisation.addEdges(schedule.getUsedEdges());
+    return visualisation;
   }
 }

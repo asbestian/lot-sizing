@@ -1,6 +1,7 @@
 package de.asbestian.productionproblem.optimisation;
 
 import de.asbestian.productionproblem.input.Input;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -80,8 +81,20 @@ public class Problem {
     addEdges();
   }
 
-  public Collection<DecisionVertex> getDecisionVertices() {
+  public Collection<Vertex> getDemandVertices() {
+    return Collections.unmodifiableCollection(Arrays.asList(demandVertices));
+  }
+
+  public Collection<Vertex> getDecisionVertices() {
     return Collections.unmodifiableCollection(decisionVertices.values());
+  }
+
+  public Collection<Vertex> getTimeSlotVertices() {
+    return Collections.unmodifiableCollection(Arrays.asList(timeSlotVertices));
+  }
+
+  public SuperSink getSuperSink() {
+    return superSink;
   }
 
   public Graph<Vertex, DefaultEdge> getResidualGraph(final Schedule schedule) {
@@ -99,9 +112,7 @@ public class Problem {
     return resGraph;
   }
 
-  /**
-   * Computes a schedule based on the maximum flow of the graph.
-   */
+  /** Computes a schedule based on the maximum flow of the graph. */
   public Schedule computeInitialSchedule() {
     // add super source and connect it to demand vertices
     final var superSource = new SuperSink(idSupplier.get());

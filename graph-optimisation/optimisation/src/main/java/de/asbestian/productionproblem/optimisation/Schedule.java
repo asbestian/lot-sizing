@@ -99,7 +99,7 @@ public class Schedule {
     return getChangeOverCost() + getInventoryCost();
   }
 
-  Collection<Pair<Vertex, Vertex>> getUsedEdges() {
+  public Collection<Pair<Vertex, Vertex>> getUsedEdges() {
     return Collections.unmodifiableSet(usedEdges);
   }
 
