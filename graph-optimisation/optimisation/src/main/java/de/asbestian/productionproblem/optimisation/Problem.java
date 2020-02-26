@@ -81,15 +81,15 @@ public class Problem {
     addEdges();
   }
 
-  public Collection<DemandVertex> getDemandVertices() {
+  public Collection<Vertex> getDemandVertices() {
     return Collections.unmodifiableCollection(Arrays.asList(demandVertices));
   }
 
-  public Collection<DecisionVertex> getDecisionVertices() {
+  public Collection<Vertex> getDecisionVertices() {
     return Collections.unmodifiableCollection(decisionVertices.values());
   }
 
-  public Collection<TimeSlotVertex> getTimeSlotVertices() {
+  public Collection<Vertex> getTimeSlotVertices() {
     return Collections.unmodifiableCollection(Arrays.asList(timeSlotVertices));
   }
 
