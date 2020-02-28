@@ -65,12 +65,19 @@ class ProblemTest {
     final Input input = new Input();
     input.read(path);
     final String expectedSchedule = "[1, 0, 2]";
+    final int expectedInventoryCost = 0;
+    final int expectedChangeOverCost = 3 + 2;
+    final int expectedNumberOfEdges = 9;
     Problem problem = new Problem(input);
     problem.build();
 
     final Schedule schedule = problem.computeInitialSchedule();
 
     assertEquals(expectedSchedule, schedule.toString());
+    assertEquals(expectedInventoryCost, schedule.getInventoryCost());
+    assertEquals(expectedChangeOverCost, schedule.getChangeOverCost());
+    assertEquals(expectedInventoryCost + expectedChangeOverCost, schedule.getCost());
+    assertEquals(expectedNumberOfEdges, schedule.getEdges().size());
   }
 
   @Test

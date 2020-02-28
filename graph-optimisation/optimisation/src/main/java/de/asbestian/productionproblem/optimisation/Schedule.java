@@ -18,7 +18,7 @@ public class Schedule {
   private final double changeOverCost;
   private final double inventoryCost;
 
-  Schedule(final Input input, final Collection<Pair<Vertex, Vertex>> usedEdges) {
+  public Schedule(final Input input, final Collection<Pair<Vertex, Vertex>> usedEdges) {
     this.edges = new HashSet<>();
     this.schedule = new int[input.getNumTimeSlots()];
     Arrays.fill(schedule, -1);
