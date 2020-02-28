@@ -3,7 +3,7 @@ package de.asbestian.productionproblem.optimisation;
 import de.asbestian.productionproblem.input.Input;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -22,7 +22,7 @@ import org.slf4j.LoggerFactory;
 /**
  * Graph representing the production problem based on the file input.
  *
- * <p>The constructed graph has 4 vertex layers (including an additional superSink). Assume we have
+ * <p>The constructed graph has 3 vertex layers (excluding the additional superSink). Assume we have
  * m different item types and n time slots. Then the first vertex layer consists of _demand
  * vertices_ which correspond to the items that need to be produced. E.g., if an item of type i
  * needs to be produced before time slot j, then there is a corresponding demand vertex. The number
@@ -81,16 +81,25 @@ public class Problem {
     addEdges();
   }
 
-  public Collection<Vertex> getDemandVertices() {
-    return Collections.unmodifiableCollection(Arrays.asList(demandVertices));
+  public int getNumberOfEdges() {
+    return graph.edgeSet().size();
   }
 
-  public Collection<Vertex> getDecisionVertices() {
-    return Collections.unmodifiableCollection(decisionVertices.values());
+  /** Returns unmodifiable list of demand vertices in ascending Id order */
+  public List<Vertex> getDemandVertices() {
+    return List.of(demandVertices);
   }
 
-  public Collection<Vertex> getTimeSlotVertices() {
-    return Collections.unmodifiableCollection(Arrays.asList(timeSlotVertices));
+  /** Returns unmodifiable list of decision vertices in ascending Id order */
+  public List<Vertex> getDecisionVertices() {
+    return decisionVertices.values().stream()
+        .sorted(Comparator.comparingInt(Vertex::getId))
+        .collect(Collectors.toUnmodifiableList());
+  }
+
+  /** Returns unmodifiable list of time slot vertices in ascending Id order */
+  public List<Vertex> getTimeSlotVertices() {
+    return List.of(timeSlotVertices);
   }
 
   public SuperSink getSuperSink() {
@@ -114,14 +123,16 @@ public class Problem {
 
   /** Computes a schedule based on the maximum flow of the graph. */
   public Schedule computeInitialSchedule() {
+    final int originalNumberOfEdges = graph.edgeSet().size();
+    final int originalNumberOfVertices = graph.vertexSet().size();
     // add super source and connect it to demand vertices
-    final var superSource = new SuperSink(idSupplier.get());
+    final SuperSink superSource = new SuperSink(idSupplier.get());
     graph.addVertex(superSource);
-    for (final var demandVertex : demandVertices) {
+    for (final DemandVertex demandVertex : demandVertices) {
       graph.addEdge(superSource, demandVertex);
     }
     // connect super sink to super source and set corresponding capacity to infinity
-    final var sinkSourceEdge = graph.addEdge(superSink, superSource);
+    final DefaultEdge sinkSourceEdge = graph.addEdge(superSink, superSource);
     graph.setEdgeWeight(sinkSourceEdge, Double.POSITIVE_INFINITY);
     // compute max flow from super source to super sink
     final var maxFlowFinder = new PushRelabelMFImpl<>(graph);
@@ -135,7 +146,15 @@ public class Problem {
     }
     // remove super source and corresponding edges
     graph.removeVertex(superSource);
-    return new Schedule(input, graph, maxFlow.getFlowMap());
+    assert graph.edgeSet().size() == originalNumberOfEdges;
+    assert graph.vertexSet().size() == originalNumberOfVertices;
+    final Collection<Pair<Vertex, Vertex>> usedEdges =
+        graph.edgeSet().stream()
+            .filter(edge -> maxFlow.getFlow(edge) > 0.)
+            .map(edge -> Pair.of(graph.getEdgeSource(edge), graph.getEdgeTarget(edge)))
+            .collect(Collectors.toUnmodifiableList());
+    assert usedEdges.size() == 3 * demandVertices.length;
+    return new Schedule(input, usedEdges);
   }
 
   public static <E> List<Cycle> computeCycles(final Graph<Vertex, E> graph) {
@@ -186,35 +205,34 @@ public class Problem {
   }
 
   private void addEdgesFromDemandVerticesToDecisionVertices() {
-    for (final var demandVertex : demandVertices) {
-      final var type = demandVertex.getType();
-      final var timeSlot = demandVertex.getTimeSlot();
+    for (final DemandVertex demandVertex : demandVertices) {
+      final int type = demandVertex.getType();
+      final int timeSlot = demandVertex.getTimeSlot();
       IntStream.rangeClosed(0, timeSlot)
-          .forEach(
-              slot -> {
-                final var edge =
-                    graph.addEdge(demandVertex, decisionVertices.get(Pair.of(type, slot)));
-              });
+          .forEach(slot -> graph.addEdge(demandVertex, decisionVertices.get(Pair.of(type, slot))));
     }
   }
 
+  // Adds edges between decision vertices and time slot vertices. Only decision vertices with
+  // positive incoming edge degree are considered.
   private void addEdgesFromDecisionVerticesToTimeSlotVertices() {
-    decisionVertices
-        .values()
-        .forEach(
-            vertex -> {
-              final var timeSlot = vertex.getTimeSlot();
-              graph.addEdge(vertex, timeSlotVertices[timeSlot]);
-            });
+    decisionVertices.values().stream()
+        .filter(vertex -> graph.inDegreeOf(vertex) > 0)
+        .forEach(vertex -> graph.addEdge(vertex, timeSlotVertices[vertex.getTimeSlot()]));
   }
 
+  // Adds edges between time slot vertices and super sink. Only time slot vertices with positive
+  // incoming edge degree are considered.
   private void addEdgesFromTimeSlotVerticesToSuperSink() {
-    for (final var timeSlotVertex : timeSlotVertices) {
-      graph.addEdge(timeSlotVertex, superSink);
-    }
+    Arrays.stream(timeSlotVertices)
+        .filter(vertex -> graph.inDegreeOf(vertex) > 0)
+        .forEach(vertex -> graph.addEdge(vertex, superSink));
   }
 
   private void addEdges() {
+    // CAUTION: order of below function call is important as edges from decision vertices to time
+    // slow vertices are only added if the considered decision vertex has positive in-degree.
+    // Equivalently, for edges between time slot vertices and super sink.
     addEdgesFromDemandVerticesToDecisionVertices();
     addEdgesFromDecisionVerticesToTimeSlotVertices();
     addEdgesFromTimeSlotVerticesToSuperSink();

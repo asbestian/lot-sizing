@@ -79,7 +79,7 @@ public class Runner implements Callable<Integer> {
             .min(Comparator.comparing(Schedule::getCost));
 
     final Schedule bestSchedule = minSchedule.orElse(initSchedule);
-    assert initSchedule.getUsedEdges().size() == bestSchedule.getUsedEdges().size();
+    assert initSchedule.getEdges().size() == bestSchedule.getEdges().size();
     final Visualisation bestScheduleVis = getScheduleVis(problem, bestSchedule);
     bestScheduleVis.saveToJPG("bestSchedule.jpg");
     System.out.println("\nBest found schedule: " + bestSchedule);
@@ -106,7 +106,7 @@ public class Runner implements Callable<Integer> {
         problem.getDecisionVertices(),
         problem.getTimeSlotVertices(),
         problem.getSuperSink());
-    visualisation.addEdges(schedule.getUsedEdges());
+    visualisation.addEdges(schedule.getEdges());
     return visualisation;
   }
 }
