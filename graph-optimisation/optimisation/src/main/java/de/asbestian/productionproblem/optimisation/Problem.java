@@ -2,6 +2,7 @@ package de.asbestian.productionproblem.optimisation;
 
 import de.asbestian.productionproblem.input.Input;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
@@ -122,14 +123,16 @@ public class Problem {
 
   /** Computes a schedule based on the maximum flow of the graph. */
   public Schedule computeInitialSchedule() {
+    final int originalNumberOfEdges = graph.edgeSet().size();
+    final int originalNumberOfVertices = graph.vertexSet().size();
     // add super source and connect it to demand vertices
-    final var superSource = new SuperSink(idSupplier.get());
+    final SuperSink superSource = new SuperSink(idSupplier.get());
     graph.addVertex(superSource);
-    for (final var demandVertex : demandVertices) {
+    for (final DemandVertex demandVertex : demandVertices) {
       graph.addEdge(superSource, demandVertex);
     }
     // connect super sink to super source and set corresponding capacity to infinity
-    final var sinkSourceEdge = graph.addEdge(superSink, superSource);
+    final DefaultEdge sinkSourceEdge = graph.addEdge(superSink, superSource);
     graph.setEdgeWeight(sinkSourceEdge, Double.POSITIVE_INFINITY);
     // compute max flow from super source to super sink
     final var maxFlowFinder = new PushRelabelMFImpl<>(graph);
@@ -143,7 +146,15 @@ public class Problem {
     }
     // remove super source and corresponding edges
     graph.removeVertex(superSource);
-    return new Schedule(input, graph, maxFlow.getFlowMap());
+    assert graph.edgeSet().size() == originalNumberOfEdges;
+    assert graph.vertexSet().size() == originalNumberOfVertices;
+    final Collection<Pair<Vertex, Vertex>> usedEdges =
+        graph.edgeSet().stream()
+            .filter(edge -> maxFlow.getFlow(edge) > 0.)
+            .map(edge -> Pair.of(graph.getEdgeSource(edge), graph.getEdgeTarget(edge)))
+            .collect(Collectors.toUnmodifiableList());
+    assert usedEdges.size() == 3 * demandVertices.length;
+    return new Schedule(input, usedEdges);
   }
 
   public static <E> List<Cycle> computeCycles(final Graph<Vertex, E> graph) {

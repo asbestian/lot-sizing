@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import de.asbestian.productionproblem.input.Input;
+import de.asbestian.productionproblem.optimisation.Cycle;
 import de.asbestian.productionproblem.optimisation.Problem;
 import de.asbestian.productionproblem.optimisation.Schedule;
 import de.asbestian.productionproblem.optimisation.SuperSink;
@@ -15,7 +16,7 @@ import org.jgrapht.Graph;
 import org.jgrapht.graph.DefaultEdge;
 import org.junit.jupiter.api.Test;
 
-/** @author Satalia team. */
+/** @author Sebastian Schenker */
 class ProblemTest {
 
   @Test
@@ -64,9 +65,9 @@ class ProblemTest {
     final Input input = new Input();
     input.read(path);
     final String expectedSchedule = "[1, 0, 2]";
-
     Problem problem = new Problem(input);
     problem.build();
+
     final Schedule schedule = problem.computeInitialSchedule();
 
     assertEquals(expectedSchedule, schedule.toString());
@@ -126,25 +127,29 @@ class ProblemTest {
     assert Files.exists(Paths.get(path));
     final Input input = new Input();
     input.read(path);
-
     Problem problem = new Problem(input);
     problem.build();
+
     final Schedule schedule = problem.computeInitialSchedule();
     final Graph<Vertex, DefaultEdge> resGraph = problem.getResidualGraph(schedule);
 
     assertTrue(Problem.computeCycles(resGraph).isEmpty());
   }
 
+  @Test
   void computeCycles_twoFeasibleSchedules() {
     final String path =
         "src/test/resources/Instance-4timeslots_2types.txt"; // instance has two feasible solutions
     assert Files.exists(Paths.get(path));
     final Input input = new Input();
     input.read(path);
-
     Problem problem = new Problem(input);
     problem.build();
+
     final Schedule schedule = problem.computeInitialSchedule();
     final Graph<Vertex, DefaultEdge> resGraph = problem.getResidualGraph(schedule);
+    final List<Cycle> cycles = Problem.computeCycles(resGraph);
+
+    assertEquals(1, cycles.size(), "Expected number of cycles: 1, found: " + cycles.size());
   }
 }
