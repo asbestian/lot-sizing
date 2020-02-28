@@ -1,8 +1,6 @@
 package de.asbestian.productionproblem.optimisation;
 
-/**
- * @author Sebastian Schenker
- */
+/** @author Sebastian Schenker */
 public class TimeSlotVertex implements Vertex {
 
   private final int id;
@@ -20,6 +18,11 @@ public class TimeSlotVertex implements Vertex {
   @Override
   public Type getVertexType() {
     return Type.TIME_SLOT_VERTEX;
+  }
+
+  @Override
+  public int getId() {
+    return id;
   }
 
   @Override

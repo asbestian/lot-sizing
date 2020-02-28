@@ -1,8 +1,6 @@
 package de.asbestian.productionproblem.optimisation;
 
-/**
- * @author Sebastian Schenker
- */
+/** @author Sebastian Schenker */
 public class DemandVertex implements Vertex {
 
   private final int id;
@@ -29,6 +27,11 @@ public class DemandVertex implements Vertex {
   }
 
   @Override
+  public int getId() {
+    return id;
+  }
+
+  @Override
   public boolean equals(Object obj) {
     if (this == obj) {
       return true;
@@ -42,8 +45,9 @@ public class DemandVertex implements Vertex {
 
   @Override
   public int hashCode() {
-    return 31 * Integer.hashCode(id) + 31 * Integer.hashCode(type) + 31 * Integer
-        .hashCode(timeSlot);
+    return 31 * Integer.hashCode(id)
+        + 31 * Integer.hashCode(type)
+        + 31 * Integer.hashCode(timeSlot);
   }
 
   @Override

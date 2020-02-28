@@ -16,4 +16,5 @@ public interface Vertex {
 
   Vertex.Type getVertexType();
 
+  int getId();
 }

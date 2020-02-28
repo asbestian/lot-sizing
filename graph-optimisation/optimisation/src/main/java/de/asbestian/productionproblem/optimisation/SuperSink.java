@@ -1,8 +1,6 @@
 package de.asbestian.productionproblem.optimisation;
 
-/**
- * @author Sebastian Schenker
- */
+/** @author Sebastian Schenker */
 public class SuperSink implements Vertex {
 
   private final int id;
@@ -14,6 +12,11 @@ public class SuperSink implements Vertex {
   @Override
   public Type getVertexType() {
     return Type.SUPER_SINK;
+  }
+
+  @Override
+  public int getId() {
+    return id;
   }
 
   @Override
