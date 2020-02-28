@@ -12,7 +12,8 @@ import org.jgrapht.alg.util.Pair;
 /** @author Sebastian Schenker */
 public class Schedule {
 
-  private final Set<Pair<Vertex, Vertex>> edges; // the original graph edges used in this schedule
+  private final Collection<Pair<Vertex, Vertex>>
+      edges; // the original graph edges used in this schedule
   private final int[] schedule;
   private final double changeOverCost;
   private final double inventoryCost;
@@ -38,11 +39,11 @@ public class Schedule {
   }
 
   private Schedule(
-      final Set<Pair<Vertex, Vertex>> usedEdges,
+      final Collection<Pair<Vertex, Vertex>> edges,
       final int[] schedule,
       final double changeOverCost,
       final double inventoryCost) {
-    this.edges = usedEdges;
+    this.edges = edges;
     this.schedule = schedule;
     this.changeOverCost = changeOverCost;
     this.inventoryCost = inventoryCost;
@@ -94,7 +95,7 @@ public class Schedule {
   }
 
   public Collection<Pair<Vertex, Vertex>> getEdges() {
-    return Collections.unmodifiableSet(edges);
+    return Collections.unmodifiableCollection(edges);
   }
 
   public boolean containsEdge(final Vertex source, final Vertex target) {
@@ -103,18 +104,22 @@ public class Schedule {
 
   /** Computes a new schedule based on given parameters. */
   public Schedule compute(final Cycle cycle, final Input input) {
+    Set<Pair<Vertex, Vertex>> usedEdges = new HashSet<>(this.edges);
     cycle
         .getReverseGraphEdges()
-        .forEach(edge -> edges.remove(Pair.of(edge.getSecond(), edge.getFirst())));
-    edges.addAll(cycle.getOriginalGraphEdges());
-    final int[] schedule = Arrays.copyOf(this.schedule, this.schedule.length);
-    cycle.getDeactivatedDecisionVertices().forEach(vertex -> schedule[vertex.getTimeSlot()] = -1);
+        .forEach(edge -> usedEdges.remove(Pair.of(edge.getSecond(), edge.getFirst())));
+    usedEdges.addAll(cycle.getOriginalGraphEdges());
+    final int[] newSchedule = Arrays.copyOf(this.schedule, this.schedule.length);
+    cycle
+        .getDeactivatedDecisionVertices()
+        .forEach(vertex -> newSchedule[vertex.getTimeSlot()] = -1);
     cycle
         .getActivatedDecisionVertices()
-        .forEach(vertex -> schedule[vertex.getTimeSlot()] = vertex.getType());
-    final double changeOverCost = computeChangeoverCost(schedule, input);
-    final double inventoryCost = computeInventoryCost(edges, input.getInventoryCost());
-    return new Schedule(edges, schedule, changeOverCost, inventoryCost);
+        .forEach(vertex -> newSchedule[vertex.getTimeSlot()] = vertex.getType());
+    final double newChangeOverCost = computeChangeoverCost(newSchedule, input);
+    final double newInventoryCost = computeInventoryCost(usedEdges, input.getInventoryCost());
+    assert usedEdges.size() == this.edges.size();
+    return new Schedule(usedEdges, newSchedule, newChangeOverCost, newInventoryCost);
   }
 
   @Override
