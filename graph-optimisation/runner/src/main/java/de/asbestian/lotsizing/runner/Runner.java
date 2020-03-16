@@ -1,18 +1,12 @@
-package de.asbestian.productionproblem.runner;
+package de.asbestian.lotsizing.runner;
 
-import de.asbestian.productionproblem.input.Input;
-import de.asbestian.productionproblem.optimisation.Problem;
-import de.asbestian.productionproblem.optimisation.RandomEdgeRemover;
-import de.asbestian.productionproblem.optimisation.Schedule;
-import de.asbestian.productionproblem.optimisation.SubGraphGenerator;
-import de.asbestian.productionproblem.optimisation.Vertex;
-import de.asbestian.productionproblem.visualisation.Visualisation;
-import java.nio.file.Files;
-import java.nio.file.Paths;
-import java.util.Collection;
-import java.util.Comparator;
-import java.util.Optional;
-import java.util.concurrent.Callable;
+import de.asbestian.lotsizing.input.Input;
+import de.asbestian.lotsizing.optimisation.Problem;
+import de.asbestian.lotsizing.optimisation.RandomEdgeRemover;
+import de.asbestian.lotsizing.optimisation.Schedule;
+import de.asbestian.lotsizing.optimisation.SubGraphGenerator;
+import de.asbestian.lotsizing.optimisation.vertex.Vertex;
+import de.asbestian.lotsizing.visualisation.Visualisation;
 import org.jgrapht.Graph;
 import org.jgrapht.graph.DefaultEdge;
 import org.slf4j.Logger;
@@ -21,6 +15,13 @@ import picocli.CommandLine;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.Parameters;
+
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.util.Collection;
+import java.util.Comparator;
+import java.util.Optional;
+import java.util.concurrent.Callable;
 
 /** @author Sebastian Schenker */
 @Command(
@@ -36,13 +37,13 @@ public class Runner implements Callable<Integer> {
   private String file;
 
   @Option(names = "--edges", description = "The maximal number of edges each subgraph can have.")
-  private int edgeThreshold = 200;
+  private final int edgeThreshold = 200;
 
   @Option(names = "--iterations", description = "The maximal number of iterations.")
-  private int iterations = 15;
+  private final int iterations = 15;
 
-  public static void main(String... args) {
-    int exitCode = new CommandLine(new Runner()).execute(args);
+  public static void main(final String... args) {
+    final int exitCode = new CommandLine(new Runner()).execute(args);
     System.exit(exitCode);
   }
 
@@ -67,7 +68,7 @@ public class Runner implements Callable<Integer> {
     initScheduleVis.saveToJPG("initSchedule.jpg");
     final Graph<Vertex, DefaultEdge> resGraph = problem.getResidualGraph(initSchedule);
     final SubGraphGenerator subGraphGenerator = new RandomEdgeRemover(edgeThreshold, resGraph);
-    Optional<Schedule> minSchedule =
+    final Optional<Schedule> minSchedule =
         subGraphGenerator
             .generate()
             .limit(iterations)
@@ -94,7 +95,7 @@ public class Runner implements Callable<Integer> {
     System.out.println();
     try {
       System.in.read();
-    } catch (Exception e) {
+    } catch (final Exception e) {
     }
     return 0;
   }

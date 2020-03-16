@@ -5,7 +5,7 @@
   <modelVersion>4.0.0</modelVersion>
 
   <parent>
-    <groupId>de.asbestian.productionproblem</groupId>
+    <groupId>de.asbestian.lotsizing</groupId>
     <artifactId>graph-optimisation</artifactId>
     <version>0.9</version>
   </parent>
@@ -20,7 +20,7 @@
     </dependency>
 
     <dependency>
-      <groupId>de.asbestian.productionproblem</groupId>
+      <groupId>de.asbestian.lotsizing</groupId>
       <artifactId>optimisation</artifactId>
       <version>0.9</version>
     </dependency>

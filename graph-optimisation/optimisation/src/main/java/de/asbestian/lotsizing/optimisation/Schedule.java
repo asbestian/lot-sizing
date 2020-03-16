@@ -1,13 +1,13 @@
-package de.asbestian.productionproblem.optimisation;
+package de.asbestian.lotsizing.optimisation;
 
-import de.asbestian.productionproblem.input.Input;
-import de.asbestian.productionproblem.optimisation.Vertex.Type;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Set;
+import de.asbestian.lotsizing.input.Input;
+import de.asbestian.lotsizing.optimisation.vertex.DecisionVertex;
+import de.asbestian.lotsizing.optimisation.vertex.DemandVertex;
+import de.asbestian.lotsizing.optimisation.vertex.Vertex;
+import de.asbestian.lotsizing.optimisation.vertex.Vertex.Type;
 import org.jgrapht.alg.util.Pair;
+
+import java.util.*;
 
 /** @author Sebastian Schenker */
 public class Schedule {
@@ -64,7 +64,7 @@ public class Schedule {
   }
 
   private static double computeInventoryCost(
-      final Collection<Pair<Vertex, Vertex>> usedEdges, int inventoryCost) {
+      final Collection<Pair<Vertex, Vertex>> usedEdges, final int inventoryCost) {
     return usedEdges.stream()
             .filter(
                 pair ->
@@ -104,7 +104,7 @@ public class Schedule {
 
   /** Computes a new schedule based on given parameters. */
   public Schedule compute(final Cycle cycle, final Input input) {
-    Set<Pair<Vertex, Vertex>> usedEdges = new HashSet<>(this.edges);
+    final Set<Pair<Vertex, Vertex>> usedEdges = new HashSet<>(this.edges);
     cycle
         .getReverseGraphEdges()
         .forEach(edge -> usedEdges.remove(Pair.of(edge.getSecond(), edge.getFirst())));

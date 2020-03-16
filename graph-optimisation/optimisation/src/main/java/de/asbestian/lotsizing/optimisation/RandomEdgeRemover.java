@@ -1,23 +1,21 @@
-package de.asbestian.productionproblem.optimisation;
+package de.asbestian.lotsizing.optimisation;
 
-import java.util.Collection;
-import java.util.stream.Stream;
+import de.asbestian.lotsizing.optimisation.vertex.Vertex;
 import org.jgrapht.Graph;
 import org.jgrapht.graph.DefaultEdge;
 import org.paukov.combinatorics3.Generator;
 
-/**
- * @author Sebastian Schenker
- */
+import java.util.Collection;
+import java.util.stream.Stream;
+
+/** @author Sebastian Schenker */
 public class RandomEdgeRemover implements SubGraphGenerator {
 
   private final int edgeThreshold;
   private final Graph<Vertex, DefaultEdge> graph;
 
-  /**
-   * @param edgeThreshold the number of edges that the graph should keep
-   */
-  public RandomEdgeRemover(int edgeThreshold, final Graph<Vertex, DefaultEdge> graph) {
+  /** @param edgeThreshold the number of edges that the graph should keep */
+  public RandomEdgeRemover(final int edgeThreshold, final Graph<Vertex, DefaultEdge> graph) {
     this.edgeThreshold = Math.min(edgeThreshold, graph.edgeSet().size());
     this.graph = graph;
   }

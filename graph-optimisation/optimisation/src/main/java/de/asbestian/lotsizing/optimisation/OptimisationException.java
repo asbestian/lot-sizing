@@ -1,9 +1,9 @@
 package de.asbestian.lotsizing.optimisation;
 
 /** @author Sebastian Schenker */
-public class GraphException extends RuntimeException {
+public class OptimisationException extends RuntimeException {
 
-  public GraphException(final String message) {
+  public OptimisationException(final String message) {
     super(message);
   }
 }

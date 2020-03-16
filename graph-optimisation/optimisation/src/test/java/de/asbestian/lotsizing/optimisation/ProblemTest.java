@@ -1,20 +1,18 @@
-package de.asbestian.de.productionproblem.optimisation;
+package de.asbestian.lotsizing.optimisation;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-
-import de.asbestian.productionproblem.input.Input;
-import de.asbestian.productionproblem.optimisation.Cycle;
-import de.asbestian.productionproblem.optimisation.Problem;
-import de.asbestian.productionproblem.optimisation.Schedule;
-import de.asbestian.productionproblem.optimisation.SuperSink;
-import de.asbestian.productionproblem.optimisation.Vertex;
-import java.nio.file.Files;
-import java.nio.file.Paths;
-import java.util.List;
+import de.asbestian.lotsizing.input.Input;
+import de.asbestian.lotsizing.optimisation.vertex.SuperSink;
+import de.asbestian.lotsizing.optimisation.vertex.Vertex;
 import org.jgrapht.Graph;
 import org.jgrapht.graph.DefaultEdge;
 import org.junit.jupiter.api.Test;
+
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.util.List;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /** @author Sebastian Schenker */
 class ProblemTest {
@@ -35,7 +33,7 @@ class ProblemTest {
     final Input input = new Input();
     input.read(path);
 
-    Problem problem = new Problem(input);
+    final Problem problem = new Problem(input);
     problem.build();
 
     assertEquals(3, problem.getDemandVertices().size());
@@ -51,7 +49,7 @@ class ProblemTest {
     final Input input = new Input();
     input.read(path);
 
-    Problem problem = new Problem(input);
+    final Problem problem = new Problem(input);
     problem.build();
 
     assertEquals(15, problem.getNumberOfEdges());
@@ -68,7 +66,7 @@ class ProblemTest {
     final int expectedInventoryCost = 0;
     final int expectedChangeOverCost = 3 + 2;
     final int expectedNumberOfEdges = 9;
-    Problem problem = new Problem(input);
+    final Problem problem = new Problem(input);
     problem.build();
 
     final Schedule schedule = problem.computeInitialSchedule();
@@ -87,7 +85,7 @@ class ProblemTest {
     assert Files.exists(Paths.get(path));
     final Input input = new Input();
     input.read(path);
-    Problem problem = new Problem(input);
+    final Problem problem = new Problem(input);
     problem.build();
     final List<Vertex> demandVertices = problem.getDemandVertices();
     final List<Vertex> decisionVertices = problem.getDecisionVertices();
@@ -134,7 +132,7 @@ class ProblemTest {
     assert Files.exists(Paths.get(path));
     final Input input = new Input();
     input.read(path);
-    Problem problem = new Problem(input);
+    final Problem problem = new Problem(input);
     problem.build();
 
     final Schedule schedule = problem.computeInitialSchedule();
@@ -150,7 +148,7 @@ class ProblemTest {
     assert Files.exists(Paths.get(path));
     final Input input = new Input();
     input.read(path);
-    Problem problem = new Problem(input);
+    final Problem problem = new Problem(input);
     problem.build();
 
     final Schedule schedule = problem.computeInitialSchedule();

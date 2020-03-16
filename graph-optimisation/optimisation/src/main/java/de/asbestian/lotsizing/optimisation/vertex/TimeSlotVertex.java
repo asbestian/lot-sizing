@@ -1,11 +1,11 @@
-package de.asbestian.lotsizing.optimisation;
+package de.asbestian.lotsizing.optimisation.vertex;
 
 /** @author Sebastian Schenker */
 public class TimeSlotVertex extends Vertex {
 
   private final int timeSlot;
 
-  TimeSlotVertex(final int id, final int timeSlot) {
+  public TimeSlotVertex(final int id, final int timeSlot) {
     super(id);
     this.timeSlot = timeSlot;
   }

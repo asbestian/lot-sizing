@@ -1,15 +1,16 @@
-package de.asbestian.productionproblem.optimisation;
+package de.asbestian.lotsizing.optimisation;
 
-import de.asbestian.productionproblem.optimisation.Vertex.Type;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import de.asbestian.lotsizing.optimisation.vertex.DecisionVertex;
+import de.asbestian.lotsizing.optimisation.vertex.Vertex;
+import de.asbestian.lotsizing.optimisation.vertex.Vertex.Type;
 import org.jgrapht.Graph;
 import org.jgrapht.alg.util.Pair;
 
-/**
- * @author Sebastian Schenker
- */
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+
+/** @author Sebastian Schenker */
 public class Cycle {
 
   private final List<Pair<Vertex, Vertex>> originalGraphEdges;
@@ -56,7 +57,7 @@ public class Cycle {
    * @param source source vertex of the considered edge
    * @param target target vertex of the considered edge
    * @return true if source corresponds to demand vertex and target corresponds to decision vertex;
-   * otherwise, false.
+   *     otherwise, false.
    */
   private boolean isActivatingEdge(final Vertex source, final Vertex target) {
     return source.getVertexType() == Type.DEMAND_VERTEX
@@ -81,11 +82,11 @@ public class Cycle {
    */
   private boolean isOriginalEdge(final Vertex source, final Vertex target) {
     return source.getVertexType() == Type.DEMAND_VERTEX
-        && target.getVertexType() == Type.DECISION_VERTEX
+            && target.getVertexType() == Type.DECISION_VERTEX
         || source.getVertexType() == Type.DECISION_VERTEX
-        && target.getVertexType() == Type.TIME_SLOT_VERTEX
+            && target.getVertexType() == Type.TIME_SLOT_VERTEX
         || source.getVertexType() == Type.TIME_SLOT_VERTEX
-        && target.getVertexType() == Type.SUPER_SINK;
+            && target.getVertexType() == Type.SUPER_SINK;
   }
 
   public List<Pair<Vertex, Vertex>> getOriginalGraphEdges() {

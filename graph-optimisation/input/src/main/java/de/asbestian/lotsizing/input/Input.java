@@ -1,12 +1,13 @@
-package de.asbestian.productionproblem.input;
+package de.asbestian.lotsizing.input;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.stream.Collectors;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * This class handles the file input. An example input looks like:
@@ -40,20 +41,20 @@ public class Input {
   }
 
   public void read(final String file) {
-    try (BufferedReader bf = new BufferedReader(new FileReader(file))) {
+    try (final BufferedReader bf = new BufferedReader(new FileReader(file))) {
       numTimeSlots = readSingleValueLine(bf.readLine());
       LOGGER.info("Number of time slots: {}", numTimeSlots);
       numTypes = readSingleValueLine(bf.readLine());
       LOGGER.info("Number of types: {}", numTypes);
       for (int type = 0; type < numTypes; ++type) {
-        ArrayList<Integer> type_demand = readMultipleValueLine(bf.readLine());
+        final ArrayList<Integer> type_demand = readMultipleValueLine(bf.readLine());
         assert type_demand.size() == numTimeSlots;
         demand.add(type_demand);
       }
       inventoryCost = readSingleValueLine(bf.readLine());
       LOGGER.info("Inventory cost: {}", inventoryCost);
       for (int type = 0; type < numTypes; ++type) {
-        ArrayList<Integer> cost = readMultipleValueLine(bf.readLine());
+        final ArrayList<Integer> cost = readMultipleValueLine(bf.readLine());
         assert cost.size() == numTypes;
         changeover_cost.add(cost);
       }
@@ -75,8 +76,8 @@ public class Input {
     return Integer.parseInt(line);
   }
 
-  private static ArrayList<Integer> readMultipleValueLine(String line) {
-    String[] values = line.split(" ");
+  private static ArrayList<Integer> readMultipleValueLine(final String line) {
+    final String[] values = line.split(" ");
     return Arrays.stream(values)
         .map(Integer::valueOf)
         .collect(Collectors.toCollection(ArrayList::new));
@@ -107,7 +108,7 @@ public class Input {
   }
 
   /** Returns the change over cost from predType to succType; */
-  public int getChangeOverCost(int predType, int succType) {
+  public int getChangeOverCost(final int predType, final int succType) {
     return changeover_cost.get(predType).get(succType);
   }
 }

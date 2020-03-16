@@ -1,4 +1,4 @@
-package de.asbestian.lotsizing.optimisation;
+package de.asbestian.lotsizing.optimisation.vertex;
 
 /** @author Sebastian Schenker */
 public class Vertex {

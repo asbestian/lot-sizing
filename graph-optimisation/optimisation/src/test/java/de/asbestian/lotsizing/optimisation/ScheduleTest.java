@@ -1,22 +1,20 @@
-package de.asbestian.de.productionproblem.optimisation;
+package de.asbestian.lotsizing.optimisation;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import de.asbestian.lotsizing.input.Input;
+import de.asbestian.lotsizing.optimisation.vertex.SuperSink;
+import de.asbestian.lotsizing.optimisation.vertex.Vertex;
+import org.jgrapht.Graph;
+import org.jgrapht.alg.util.Pair;
+import org.jgrapht.graph.DefaultEdge;
+import org.junit.jupiter.api.Test;
 
-import de.asbestian.productionproblem.input.Input;
-import de.asbestian.productionproblem.optimisation.Cycle;
-import de.asbestian.productionproblem.optimisation.Problem;
-import de.asbestian.productionproblem.optimisation.Schedule;
-import de.asbestian.productionproblem.optimisation.SuperSink;
-import de.asbestian.productionproblem.optimisation.Vertex;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
-import org.jgrapht.Graph;
-import org.jgrapht.alg.util.Pair;
-import org.jgrapht.graph.DefaultEdge;
-import org.junit.jupiter.api.Test;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 /** @author Sebastian Schenker */
 class ScheduleTest {
@@ -30,7 +28,7 @@ class ScheduleTest {
     assert Files.exists(Paths.get(path));
     final Input input = new Input();
     input.read(path);
-    Problem problem = new Problem(input);
+    final Problem problem = new Problem(input);
     problem.build();
     final List<Vertex> demandVertices = problem.getDemandVertices();
     final List<Vertex> decisionVertices = problem.getDecisionVertices();
@@ -67,7 +65,7 @@ class ScheduleTest {
     assert Files.exists(Paths.get(path));
     final Input input = new Input();
     input.read(path);
-    Problem problem = new Problem(input);
+    final Problem problem = new Problem(input);
     problem.build();
     final Schedule initSchedule = problem.computeInitialSchedule(); //
     assertEquals("[1, 0, 1, -1]", initSchedule.toString());

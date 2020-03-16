@@ -1,4 +1,5 @@
-import de.asbestian.lotsizing.input.Input;
+package de.asbestian.lotsizing.input;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 

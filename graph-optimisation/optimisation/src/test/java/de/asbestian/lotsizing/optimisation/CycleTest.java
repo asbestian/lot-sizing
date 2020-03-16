@@ -1,24 +1,24 @@
-package de.asbestian.de.productionproblem.optimisation;
+package de.asbestian.lotsizing.optimisation;
 
-import static org.junit.jupiter.api.Assertions.assertIterableEquals;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
-
-import de.asbestian.productionproblem.optimisation.Cycle;
-import de.asbestian.productionproblem.optimisation.DecisionVertex;
-import de.asbestian.productionproblem.optimisation.DemandVertex;
-import de.asbestian.productionproblem.optimisation.TimeSlotVertex;
-import de.asbestian.productionproblem.optimisation.Vertex;
-import de.asbestian.productionproblem.optimisation.Vertex.Type;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
+import de.asbestian.lotsizing.optimisation.vertex.DecisionVertex;
+import de.asbestian.lotsizing.optimisation.vertex.DemandVertex;
+import de.asbestian.lotsizing.optimisation.vertex.TimeSlotVertex;
+import de.asbestian.lotsizing.optimisation.vertex.Vertex;
+import de.asbestian.lotsizing.optimisation.vertex.Vertex.Type;
 import org.jgrapht.Graph;
 import org.jgrapht.alg.util.Pair;
 import org.jgrapht.graph.DefaultEdge;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+
+import static org.junit.jupiter.api.Assertions.assertIterableEquals;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 /** @author Sebastian Schenker */
 class CycleTest {

@@ -1,6 +1,7 @@
-package de.asbestian.productionproblem.optimisation;
+package de.asbestian.lotsizing.optimisation;
 
-import de.asbestian.productionproblem.input.Input;
+import de.asbestian.lotsizing.input.Input;
+import de.asbestian.lotsizing.optimisation.vertex.*;
 import org.jgrapht.Graph;
 import org.jgrapht.alg.cycle.JohnsonSimpleCycles;
 import org.jgrapht.alg.flow.PushRelabelMFImpl;
@@ -134,7 +135,7 @@ public class Problem {
     final var maxFlowFinder = new PushRelabelMFImpl<>(graph);
     final var maxFlow = maxFlowFinder.getMaximumFlow(superSource, superSink);
     if (maxFlow.getValue() != demandVertices.length) {
-      throw new GraphException(
+      throw new OptimisationException(
           "Computed max flow value: "
               + maxFlow.getValue()
               + "; Expected max flow value: "
