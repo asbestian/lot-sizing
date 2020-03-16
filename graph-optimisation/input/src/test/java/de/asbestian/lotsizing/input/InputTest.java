@@ -1,13 +1,14 @@
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertIterableEquals;
+import de.asbestian.lotsizing.input.Input;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
-import de.asbestian.productionproblem.input.Input;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.List;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertIterableEquals;
 
 /** @author Sebastian Schenker */
 class InputTest {
@@ -52,8 +53,8 @@ class InputTest {
 
   @Test
   void getDemand() {
-    List<Integer> expectedDemandType0 = Arrays.asList(0, 1, 0, 0, 1);
-    List<Integer> expectedDemandType1 = Arrays.asList(1, 0, 0, 0, 1);
+    final List<Integer> expectedDemandType0 = Arrays.asList(0, 1, 0, 0, 1);
+    final List<Integer> expectedDemandType1 = Arrays.asList(1, 0, 0, 0, 1);
 
     assertIterableEquals(expectedDemandType0, input.getDemand(0));
     assertIterableEquals(expectedDemandType1, input.getDemand(1));

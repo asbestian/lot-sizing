@@ -1,15 +1,6 @@
 package de.asbestian.productionproblem.optimisation;
 
 import de.asbestian.productionproblem.input.Input;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.function.Supplier;
-import java.util.stream.Collectors;
-import java.util.stream.IntStream;
 import org.jgrapht.Graph;
 import org.jgrapht.alg.cycle.JohnsonSimpleCycles;
 import org.jgrapht.alg.flow.PushRelabelMFImpl;
@@ -18,6 +9,11 @@ import org.jgrapht.graph.DefaultEdge;
 import org.jgrapht.graph.builder.GraphTypeBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.*;
+import java.util.function.Supplier;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 /**
  * Graph representing the production problem based on the file input.
@@ -126,7 +122,7 @@ public class Problem {
     final int originalNumberOfEdges = graph.edgeSet().size();
     final int originalNumberOfVertices = graph.vertexSet().size();
     // add super source and connect it to demand vertices
-    final SuperSink superSource = new SuperSink(idSupplier.get());
+    final Vertex superSource = new Vertex(idSupplier.get());
     graph.addVertex(superSource);
     for (final DemandVertex demandVertex : demandVertices) {
       graph.addEdge(superSource, demandVertex);
