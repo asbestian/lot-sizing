@@ -4,12 +4,12 @@
   xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
 
-  <groupId>de.asbestian.productionproblem</groupId>
+  <groupId>de.asbestian.lotsizing</groupId>
   <artifactId>graph-optimisation</artifactId>
   <version>0.9</version>
   <packaging>pom</packaging>
 
-  <url>https://github.com/asbestian/production-problem</url>
+  <url>https://github.com/asbestian/lot-sizing</url>
 
   <modules>
     <module>input</module>
