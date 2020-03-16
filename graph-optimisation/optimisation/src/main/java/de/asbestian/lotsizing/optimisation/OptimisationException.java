@@ -1,8 +1,6 @@
-package de.asbestian.productionproblem.optimisation;
+package de.asbestian.lotsizing.optimisation;
 
-/**
- * @author Sebastian Schenker
- */
+/** @author Sebastian Schenker */
 public class GraphException extends RuntimeException {
 
   public GraphException(final String message) {
