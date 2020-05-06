@@ -1,11 +1,9 @@
-package de.asbestian.productionproblem.input;
+package de.asbestian.lotsizing.input;
 
-/**
- * @author Sebastian Schenker
- */
-public class InputException extends RuntimeException {
+/** @author Sebastian Schenker */
+class InputException extends RuntimeException {
 
-  public InputException(final String message) {
+  InputException(final String message) {
     super(message);
   }
 }

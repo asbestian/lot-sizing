@@ -1,17 +1,15 @@
 package de.asbestian.lotsizing.visualisation;
 
 import com.mxgraph.model.mxIGraphModel;
-import com.mxgraph.swing.mxGraphComponent;
 import com.mxgraph.util.mxCellRenderer;
 import com.mxgraph.view.mxGraph;
-import de.asbestian.lotsizing.optimisation.vertex.SuperSink;
-import de.asbestian.lotsizing.optimisation.vertex.Vertex;
+import de.asbestian.lotsizing.graph.vertex.SuperSink;
+import de.asbestian.lotsizing.graph.vertex.Vertex;
 import org.jgrapht.alg.util.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.imageio.ImageIO;
-import javax.swing.*;
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.File;
@@ -66,16 +64,6 @@ public class Visualisation {
     }
   }
 
-  public void removeEdges() {
-    final mxIGraphModel model = graph.getModel();
-    model.beginUpdate();
-    try {
-      edges.values().forEach(model::remove);
-    } finally {
-      model.endUpdate();
-    }
-  }
-
   public void addVertices(
       final Collection<Vertex> demandVertices,
       final Collection<Vertex> decisionVertices,
@@ -105,15 +93,6 @@ public class Visualisation {
     }
   }
 
-  public void show(final String title) {
-    final JFrame frame = new JFrame(title);
-    final mxGraphComponent graphComponent = new mxGraphComponent(graph);
-    frame.getContentPane().add(graphComponent);
-    frame.setSize(FRAME_WIDTH, FRAME_HEIGHT);
-    frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-    frame.setVisible(true);
-  }
-
   public void saveToJPG(final String filename) {
     final BufferedImage image =
         mxCellRenderer.createBufferedImage(graph, null, 1, Color.WHITE, true, null);
@@ -127,7 +106,9 @@ public class Visualisation {
   }
 
   private void addToGraph(
-          final Collection<Vertex> vertices, final double horizontalOffset, final double verticalOffset) {
+      final Collection<Vertex> vertices,
+      final double horizontalOffset,
+      final double verticalOffset) {
     double offset = horizontalOffset;
     final Object parent = graph.getDefaultParent();
     for (final Vertex vertex : vertices) {
