@@ -15,7 +15,7 @@
   <dependencies>
     <dependency>
       <groupId>de.asbestian.lotsizing</groupId>
-      <artifactId>optimisation</artifactId>
+      <artifactId>graph</artifactId>
       <version>0.9</version>
     </dependency>
 

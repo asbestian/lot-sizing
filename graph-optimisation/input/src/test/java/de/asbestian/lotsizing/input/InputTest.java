@@ -18,6 +18,8 @@ class InputTest {
 
   @BeforeEach
   void setUp() {
+    /* final URL resourcesPath = getClass().getClassLoader().getResource("gen-ip054.lp");
+     */
     final String path = "src/test/resources/Instance-5timeslots_2types.txt";
     assert Files.exists(Paths.get(path));
     input = new Input();

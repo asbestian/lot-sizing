@@ -1,12 +1,12 @@
 package de.asbestian.lotsizing.runner;
 
+import de.asbestian.lotsizing.graph.Problem;
+import de.asbestian.lotsizing.graph.Schedule;
+import de.asbestian.lotsizing.graph.vertex.Vertex;
 import de.asbestian.lotsizing.input.Input;
-import de.asbestian.lotsizing.optimisation.Problem;
-import de.asbestian.lotsizing.optimisation.RandomEdgeRemover;
-import de.asbestian.lotsizing.optimisation.Schedule;
-import de.asbestian.lotsizing.optimisation.SubGraphGenerator;
-import de.asbestian.lotsizing.optimisation.vertex.Vertex;
 import de.asbestian.lotsizing.visualisation.Visualisation;
+import java.io.BufferedReader;
+import java.io.FileReader;
 import org.jgrapht.Graph;
 import org.jgrapht.graph.DefaultEdge;
 import org.slf4j.Logger;
@@ -18,9 +18,6 @@ import picocli.CommandLine.Parameters;
 
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.util.Collection;
-import java.util.Comparator;
-import java.util.Optional;
 import java.util.concurrent.Callable;
 
 /** @author Sebastian Schenker */
@@ -37,10 +34,10 @@ public class Runner implements Callable<Integer> {
   private String file;
 
   @Option(names = "--edges", description = "The maximal number of edges each subgraph can have.")
-  private final int edgeThreshold = 200;
+  private int edgeThreshold = 200;
 
   @Option(names = "--iterations", description = "The maximal number of iterations.")
-  private final int iterations = 15;
+  private int iterations = 15;
 
   public static void main(final String... args) {
     final int exitCode = new CommandLine(new Runner()).execute(args);
@@ -67,19 +64,8 @@ public class Runner implements Callable<Integer> {
     final Visualisation initScheduleVis = getScheduleVis(problem, initSchedule);
     initScheduleVis.saveToJPG("initSchedule.jpg");
     final Graph<Vertex, DefaultEdge> resGraph = problem.getResidualGraph(initSchedule);
-    final SubGraphGenerator subGraphGenerator = new RandomEdgeRemover(edgeThreshold, resGraph);
-    final Optional<Schedule> minSchedule =
-        subGraphGenerator
-            .generate()
-            .limit(iterations)
-            .map(Problem::computeCycles)
-            .peek(cycles -> LOGGER.info("Number of investigated cycles: {}", cycles.size()))
-            .flatMap(Collection::stream)
-            .map(cycle -> initSchedule.compute(cycle, input))
-            .filter(schedule -> schedule.getCost() < initSchedule.getCost())
-            .min(Comparator.comparing(Schedule::getCost));
 
-    final Schedule bestSchedule = minSchedule.orElse(initSchedule);
+    final Schedule bestSchedule = initSchedule;
     assert initSchedule.getEdges().size() == bestSchedule.getEdges().size();
     final Visualisation bestScheduleVis = getScheduleVis(problem, bestSchedule);
     bestScheduleVis.saveToJPG("bestSchedule.jpg");
@@ -93,10 +79,6 @@ public class Runner implements Callable<Integer> {
             + bestSchedule.getInventoryCost()
             + ")");
     System.out.println();
-    try {
-      System.in.read();
-    } catch (final Exception e) {
-    }
     return 0;
   }
 

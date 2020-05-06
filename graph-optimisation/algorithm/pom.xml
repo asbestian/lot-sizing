@@ -10,15 +10,9 @@
     <version>0.9</version>
   </parent>
 
-  <artifactId>visualisation</artifactId>
+  <artifactId>algorithm</artifactId>
 
   <dependencies>
-    <dependency>
-      <groupId>com.github.vlsi.mxgraph</groupId>
-      <artifactId>jgraphx</artifactId>
-      <version>4.0.5</version>
-    </dependency>
-
     <dependency>
       <groupId>de.asbestian.lotsizing</groupId>
       <artifactId>graph</artifactId>
