@@ -5,9 +5,13 @@ import de.asbestian.lotsizing.graph.Schedule;
 import de.asbestian.lotsizing.graph.vertex.Vertex;
 import de.asbestian.lotsizing.input.Input;
 import de.asbestian.lotsizing.visualisation.Visualisation;
-import java.io.BufferedReader;
-import java.io.FileReader;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.util.List;
+import java.util.concurrent.Callable;
+import java.util.stream.Collectors;
 import org.jgrapht.Graph;
+import org.jgrapht.alg.util.Pair;
 import org.jgrapht.graph.DefaultEdge;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -15,10 +19,6 @@ import picocli.CommandLine;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.Parameters;
-
-import java.nio.file.Files;
-import java.nio.file.Paths;
-import java.util.concurrent.Callable;
 
 /** @author Sebastian Schenker */
 @Command(
@@ -55,20 +55,15 @@ public class Runner implements Callable<Integer> {
     final Problem problem = new Problem(input);
     problem.build();
     final Schedule initSchedule = problem.computeInitialSchedule();
-    LOGGER.info("Initial schedule: {}", initSchedule);
-    LOGGER.info(
+    LOGGER.debug("Initial schedule: {}", initSchedule);
+    LOGGER.debug(
         "Initial cost: {} (changeover cost = {}, inventory cost = {})",
         initSchedule.getCost(),
         initSchedule.getChangeOverCost(),
         initSchedule.getInventoryCost());
-    final Visualisation initScheduleVis = getScheduleVis(problem, initSchedule);
-    initScheduleVis.saveToJPG("initSchedule.jpg");
     final Graph<Vertex, DefaultEdge> resGraph = problem.getResidualGraph(initSchedule);
 
     final Schedule bestSchedule = initSchedule;
-    assert initSchedule.getEdges().size() == bestSchedule.getEdges().size();
-    final Visualisation bestScheduleVis = getScheduleVis(problem, bestSchedule);
-    bestScheduleVis.saveToJPG("bestSchedule.jpg");
     System.out.println("\nBest found schedule: " + bestSchedule);
     System.out.println(
         "Best found cost: "
@@ -79,10 +74,28 @@ public class Runner implements Callable<Integer> {
             + bestSchedule.getInventoryCost()
             + ")");
     System.out.println();
+    visualiseGraph(problem, resGraph, "resgraph.jpg");
     return 0;
   }
 
-  private Visualisation getScheduleVis(final Problem problem, final Schedule schedule) {
+  private void visualiseGraph(
+      final Problem problem, final Graph<Vertex, DefaultEdge> graph, final String filename) {
+    final Visualisation visualisation = new Visualisation();
+    visualisation.addVertices(
+        problem.getDemandVertices(),
+        problem.getDecisionVertices(),
+        problem.getTimeSlotVertices(),
+        problem.getSuperSink());
+    List<Pair<Vertex, Vertex>> edges =
+        graph.edgeSet().stream()
+            .map(edge -> Pair.of(graph.getEdgeSource(edge), graph.getEdgeTarget(edge)))
+            .collect(Collectors.toList());
+    visualisation.addEdges(edges);
+    visualisation.saveToJPG(filename);
+  }
+
+  private void visualiseSchedule(
+      final Problem problem, final Schedule schedule, final String filename) {
     final Visualisation visualisation = new Visualisation();
     visualisation.addVertices(
         problem.getDemandVertices(),
@@ -90,6 +103,6 @@ public class Runner implements Callable<Integer> {
         problem.getTimeSlotVertices(),
         problem.getSuperSink());
     visualisation.addEdges(schedule.getEdges());
-    return visualisation;
+    visualisation.saveToJPG(filename);
   }
 }
