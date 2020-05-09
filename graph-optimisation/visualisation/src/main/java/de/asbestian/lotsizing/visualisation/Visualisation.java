@@ -5,18 +5,21 @@ import com.mxgraph.util.mxCellRenderer;
 import com.mxgraph.view.mxGraph;
 import de.asbestian.lotsizing.graph.vertex.SuperSink;
 import de.asbestian.lotsizing.graph.vertex.Vertex;
-import org.jgrapht.alg.util.Pair;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import javax.imageio.ImageIO;
-import java.awt.*;
+import java.awt.Color;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.*;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Objects;
+import javax.imageio.ImageIO;
+import org.jgrapht.alg.util.Pair;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /** @author Sebastian Schenker */
 public class Visualisation {
@@ -93,6 +96,11 @@ public class Visualisation {
     }
   }
 
+  /**
+   * Writes visualisation as jpg-file to tmp-directory.
+   *
+   * @param filename name of the file
+   */
   public void saveToJPG(final String filename) {
     final BufferedImage image =
         mxCellRenderer.createBufferedImage(graph, null, 1, Color.WHITE, true, null);

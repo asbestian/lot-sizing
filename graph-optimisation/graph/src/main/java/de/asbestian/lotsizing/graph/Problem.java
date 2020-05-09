@@ -1,7 +1,20 @@
 package de.asbestian.lotsizing.graph;
 
+import de.asbestian.lotsizing.graph.vertex.DecisionVertex;
+import de.asbestian.lotsizing.graph.vertex.DemandVertex;
+import de.asbestian.lotsizing.graph.vertex.SuperSink;
+import de.asbestian.lotsizing.graph.vertex.TimeSlotVertex;
+import de.asbestian.lotsizing.graph.vertex.Vertex;
 import de.asbestian.lotsizing.input.Input;
-import de.asbestian.lotsizing.graph.vertex.*;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.function.Supplier;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 import org.jgrapht.Graph;
 import org.jgrapht.alg.cycle.JohnsonSimpleCycles;
 import org.jgrapht.alg.flow.PushRelabelMFImpl;
@@ -10,11 +23,6 @@ import org.jgrapht.graph.DefaultEdge;
 import org.jgrapht.graph.builder.GraphTypeBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.util.*;
-import java.util.function.Supplier;
-import java.util.stream.Collectors;
-import java.util.stream.IntStream;
 
 /**
  * Graph representing the production problem based on the file input.
@@ -157,7 +165,7 @@ public class Problem {
   public static <E> List<Cycle> computeCycles(final Graph<Vertex, E> graph) {
     final var cycleFinder = new JohnsonSimpleCycles<>(graph);
     final List<List<Vertex>> cycles = cycleFinder.findSimpleCycles();
-    return cycles.stream().map(vertices -> new Cycle(vertices, graph)).collect(Collectors.toList());
+    return cycles.stream().map(Cycle::new).collect(Collectors.toList());
   }
 
   private void addDemandVertices() {
