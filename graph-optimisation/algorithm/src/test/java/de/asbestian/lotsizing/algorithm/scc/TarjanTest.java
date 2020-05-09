@@ -1,20 +1,18 @@
 package de.asbestian.lotsizing.algorithm.scc;
 
-import de.asbestian.lotsizing.graph.vertex.Vertex;
-import org.jgrapht.Graph;
-import org.jgrapht.graph.DefaultEdge;
-import org.jgrapht.graph.SimpleDirectedGraph;
-import org.junit.jupiter.api.Test;
-
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
-
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.collection.IsIterableContainingInAnyOrder.containsInAnyOrder;
 import static org.hamcrest.core.IsIterableContaining.hasItem;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+
+import de.asbestian.lotsizing.graph.vertex.Vertex;
+import java.util.Collection;
+import java.util.Set;
+import org.jgrapht.Graph;
+import org.jgrapht.graph.DefaultEdge;
+import org.jgrapht.graph.SimpleDirectedGraph;
+import org.junit.jupiter.api.Test;
 
 class TarjanTest {
 
@@ -23,9 +21,7 @@ class TarjanTest {
     final Graph<Vertex, DefaultEdge> graph = new SimpleDirectedGraph<>(DefaultEdge.class);
 
     final Tarjan tarjan = new Tarjan(graph);
-    tarjan.findSCCs(Integer.MIN_VALUE);
-
-    assertTrue(tarjan.get().isEmpty());
+    assertTrue(tarjan.computeSCCs(Integer.MIN_VALUE).isEmpty());
   }
 
   @Test
@@ -41,13 +37,12 @@ class TarjanTest {
     graph.addEdge(v, w);
 
     final Tarjan tarjan = new Tarjan(graph);
-    tarjan.findSCCs(-1);
-    final Collection<List<Vertex>> scc = tarjan.get();
+    final Collection<Set<Vertex>> scc = tarjan.computeSCCs(0);
 
     assertEquals(3, scc.size());
-    assertTrue(scc.contains(Collections.singletonList(u)));
-    assertTrue(scc.contains(Collections.singletonList(v)));
-    assertTrue(scc.contains(Collections.singletonList(w)));
+    assertTrue(scc.contains(Set.of(u)));
+    assertTrue(scc.contains(Set.of(v)));
+    assertTrue(scc.contains(Set.of(w)));
   }
 
   @Test
@@ -74,11 +69,37 @@ class TarjanTest {
     graph.addEdge(six, four);
 
     final Tarjan tarjan = new Tarjan(graph);
-    tarjan.findSCCs(0);
-    final Collection<List<Vertex>> components = tarjan.get();
+    final Collection<Set<Vertex>> components = tarjan.computeSCCs(0);
 
     assertEquals(2, components.size());
     assertThat(components, hasItem(containsInAnyOrder(one, two, three)));
     assertThat(components, hasItem(containsInAnyOrder(four, five, six)));
+  }
+
+  @Test
+  void vertexThreshold_threeVertexSCCRemaining() {
+    final Graph<Vertex, DefaultEdge> graph = new SimpleDirectedGraph<>(DefaultEdge.class);
+    final Vertex one = new Vertex(1);
+    final Vertex two = new Vertex(2);
+    final Vertex three = new Vertex(3);
+    final Vertex four = new Vertex(4);
+    final Vertex five = new Vertex(5);
+    graph.addVertex(one);
+    graph.addVertex(two);
+    graph.addVertex(three);
+    graph.addVertex(four);
+    graph.addVertex(five);
+    graph.addEdge(one, two);
+    graph.addEdge(two, three);
+    graph.addEdge(three, four);
+    graph.addEdge(four, five);
+    graph.addEdge(five, three);
+
+    final Tarjan tarjan = new Tarjan(graph);
+    final Collection<Set<Vertex>> components = tarjan.computeSCCs(3);
+
+    assertEquals(1, components.size());
+    assertEquals(3, components.iterator().next().size());
+    assertThat(components, hasItem(containsInAnyOrder(three, four, five)));
   }
 }

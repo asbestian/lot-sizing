@@ -165,7 +165,7 @@ public class Problem {
   public static <E> List<Cycle> computeCycles(final Graph<Vertex, E> graph) {
     final var cycleFinder = new JohnsonSimpleCycles<>(graph);
     final List<List<Vertex>> cycles = cycleFinder.findSimpleCycles();
-    return cycles.stream().map(Cycle::new).collect(Collectors.toList());
+    return cycles.stream().map(list -> new Cycle(list)).collect(Collectors.toList());
   }
 
   private void addDemandVertices() {

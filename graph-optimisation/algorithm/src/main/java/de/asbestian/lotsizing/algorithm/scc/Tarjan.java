@@ -1,10 +1,16 @@
 package de.asbestian.lotsizing.algorithm.scc;
 
 import de.asbestian.lotsizing.graph.vertex.Vertex;
+import java.util.ArrayDeque;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Deque;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 import org.jgrapht.Graph;
 import org.jgrapht.graph.DefaultEdge;
-
-import java.util.*;
 
 /** Computes strongly connected components based on Tarjan's algorithm. */
 public class Tarjan implements StronglyConnectedComponentFinder {
@@ -14,7 +20,7 @@ public class Tarjan implements StronglyConnectedComponentFinder {
   private final Map<Vertex, Integer> dfsIndex;
   private final Map<Vertex, Boolean> isVertexOnStack;
   private final Deque<Vertex> stack;
-  private final Map<Vertex, List<Vertex>> stronglyConnectedComponent;
+  private final Map<Vertex, Set<Vertex>> stronglyConnectedComponent;
 
   /** Constructor. */
   public Tarjan(final Graph<Vertex, DefaultEdge> graph) {
@@ -26,16 +32,14 @@ public class Tarjan implements StronglyConnectedComponentFinder {
     stronglyConnectedComponent = new HashMap<>();
   }
 
-  /**
-   * Computes strongly connected components (SCCs) of the subgraph induced by the vertices whose
-   * id's are greater or equal to the given threshold.
-   */
-  public void findSCCs(final int threshold) {
+  @Override
+  public Collection<Set<Vertex>> computeSCCs(final int threshold) {
     clearState();
     graph.vertexSet().stream()
         .filter(v -> v.getId() >= threshold)
         .filter(v -> !dfsIndex.containsKey(v))
         .forEach(v -> findSCC(v, threshold));
+    return Collections.unmodifiableCollection(stronglyConnectedComponent.values());
   }
 
   private void clearState() {
@@ -72,7 +76,7 @@ public class Tarjan implements StronglyConnectedComponentFinder {
     }
     // If u is a root node, pop the stack and generate an SCC.
     if (dfsIndex.get(u).equals(smallestReachableDfsIndex.get(u))) {
-      final List<Vertex> scc = new ArrayList<>();
+      final Set<Vertex> scc = new HashSet<>();
       Vertex vertex;
       do {
         vertex = stack.pop();
@@ -81,10 +85,5 @@ public class Tarjan implements StronglyConnectedComponentFinder {
       } while (!vertex.equals(u));
       stronglyConnectedComponent.put(u, scc);
     }
-  }
-
-  @Override
-  public Collection<List<Vertex>> get() {
-    return Collections.unmodifiableCollection(stronglyConnectedComponent.values());
   }
 }
