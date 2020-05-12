@@ -9,6 +9,8 @@ Compilation & Execution
 
 1. `cd graph-optimisation`
 2. `mvn package`
-3. `java -jar runner/target/graph-opt-jar-with-dependencies.jar --edges=value --iterations=value2 problem_file.txt`
+3. `java -jar runner/target/graph-opt-jar-with-dependencies.jar problem_file.txt`
 
 To see available command line arguments execute: `java -jar runner/target/graph-opt-jar-with-dependencies.jar -h`
+
+To change logging level to _debug_ add `-Dorg.slf4j.simpleLogger.defaultLogLevel=debug` to `java ...` command.

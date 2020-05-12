@@ -1,4 +1,7 @@
 module runner {
+  opens de.asbestian.lotsizing.runner;
+
+  requires algorithm;
   requires graph;
   requires input;
   requires visualisation;

@@ -1,24 +1,23 @@
 package de.asbestian.lotsizing.graph;
 
+import static org.junit.jupiter.api.Assertions.assertIterableEquals;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+
 import de.asbestian.lotsizing.graph.vertex.DecisionVertex;
 import de.asbestian.lotsizing.graph.vertex.DemandVertex;
 import de.asbestian.lotsizing.graph.vertex.TimeSlotVertex;
 import de.asbestian.lotsizing.graph.vertex.Vertex;
 import de.asbestian.lotsizing.graph.vertex.Vertex.Type;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 import org.jgrapht.Graph;
 import org.jgrapht.alg.util.Pair;
 import org.jgrapht.graph.DefaultEdge;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-
-import static org.junit.jupiter.api.Assertions.assertIterableEquals;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
 
 /** @author Sebastian Schenker */
 class CycleTest {
@@ -43,7 +42,7 @@ class CycleTest {
         Arrays.asList(demandVertex, decisionVertex, timeSlotVertex, otherDecisionVertex);
     final Graph<Vertex, DefaultEdge> resGraph = mock(Graph.class);
     when(resGraph.containsEdge(any(), any())).thenReturn(true);
-    cycle = new Cycle(vertices, resGraph);
+    cycle = new Cycle(vertices);
   }
 
   @Test

@@ -3,39 +3,54 @@ package de.asbestian.lotsizing.graph;
 import de.asbestian.lotsizing.graph.vertex.DecisionVertex;
 import de.asbestian.lotsizing.graph.vertex.Vertex;
 import de.asbestian.lotsizing.graph.vertex.Vertex.Type;
-import org.jgrapht.Graph;
-import org.jgrapht.alg.util.Pair;
-
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import org.jgrapht.alg.util.Pair;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /** @author Sebastian Schenker */
 public class Cycle {
+
+  private static final Logger LOG = LoggerFactory.getLogger(Cycle.class);
 
   private final List<Pair<Vertex, Vertex>> originalGraphEdges;
   private final List<Pair<Vertex, Vertex>> reverseGraphEdges;
   private final List<DecisionVertex> activatedDecisionVertices;
   private final List<DecisionVertex> deactivatedDecisionVertices;
 
-  public <E> Cycle(final List<Vertex> vertices, final Graph<Vertex, E> residualGraph) {
-    final var numVertices = vertices.size();
-    assert numVertices > 2;
+  private Cycle() {
     reverseGraphEdges = new ArrayList<>();
     originalGraphEdges = new ArrayList<>();
     activatedDecisionVertices = new ArrayList<>();
     deactivatedDecisionVertices = new ArrayList<>();
-    for (int j = 1; j < numVertices; ++j) {
-      final var source = vertices.get(j - 1);
-      final var target = vertices.get(j);
-      assert residualGraph.containsEdge(source, target);
+  }
+
+  public Cycle(final List<Vertex> vertices) {
+    this();
+    final var numVertices = vertices.size();
+    if (numVertices > 1) {
+      for (int j = 1; j < numVertices; ++j) {
+        final var source = vertices.get(j - 1);
+        final var target = vertices.get(j);
+        addToDataStructures(source, target);
+      }
+      final var source = vertices.get(numVertices - 1);
+      final var target = vertices.get(0);
       addToDataStructures(source, target);
+      if (activatedDecisionVertices.size() != deactivatedDecisionVertices.size()) {
+        LOG.warn(
+            "Number of activated decision vertices unequal to number of deactivated decision vertices.");
+      }
     }
-    final var source = vertices.get(numVertices - 1);
-    final var target = vertices.get(0);
-    assert residualGraph.containsEdge(source, target);
-    addToDataStructures(source, target);
-    assert activatedDecisionVertices.size() == deactivatedDecisionVertices.size();
+  }
+
+  public boolean isEmpty() {
+    return originalGraphEdges.isEmpty()
+        && reverseGraphEdges.isEmpty()
+        && activatedDecisionVertices.isEmpty()
+        && deactivatedDecisionVertices.isEmpty();
   }
 
   private void addToDataStructures(final Vertex source, final Vertex target) {

@@ -28,8 +28,8 @@ public class Visualisation {
   private static final int FRAME_WIDTH = 1600;
   private static final int FRAME_HEIGHT = 900;
   private static final int BORDER_OFFSET = 30;
-  private static final int VERTEX_WIDTH = 5;
-  private static final int VERTEX_HEIGHT = 5;
+  private static final int VERTEX_WIDTH = 20;
+  private static final int VERTEX_HEIGHT = 18;
   private final mxGraph graph;
   private final Map<Vertex, Object> vertices;
   private final Map<Pair<Vertex, Vertex>, Object> edges;
@@ -121,7 +121,8 @@ public class Visualisation {
     final Object parent = graph.getDefaultParent();
     for (final Vertex vertex : vertices) {
       final Object mxVertex =
-          graph.insertVertex(parent, null, "", offset, verticalOffset, VERTEX_WIDTH, VERTEX_HEIGHT);
+          graph.insertVertex(
+              parent, null, vertex.getId(), offset, verticalOffset, VERTEX_WIDTH, VERTEX_HEIGHT);
       this.vertices.put(vertex, mxVertex);
       offset += horizontalOffset;
     }

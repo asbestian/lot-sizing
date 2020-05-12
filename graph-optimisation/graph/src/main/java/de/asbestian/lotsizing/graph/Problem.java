@@ -165,7 +165,7 @@ public class Problem {
   public static <E> List<Cycle> computeCycles(final Graph<Vertex, E> graph) {
     final var cycleFinder = new JohnsonSimpleCycles<>(graph);
     final List<List<Vertex>> cycles = cycleFinder.findSimpleCycles();
-    return cycles.stream().map(Cycle::new).collect(Collectors.toList());
+    return cycles.stream().map(list -> new Cycle(list)).collect(Collectors.toList());
   }
 
   private void addDemandVertices() {
@@ -180,7 +180,7 @@ public class Problem {
         }
       }
     }
-    LOGGER.info("Number of added demand vertices: {}", counter);
+    LOGGER.debug("Number of added demand vertices: {}", counter);
   }
 
   private void addDecisionVertices() {
@@ -191,7 +191,7 @@ public class Problem {
         graph.addVertex(decisionVertex);
       }
     }
-    LOGGER.info("Number of added decision vertices: {}", decisionVertices.size());
+    LOGGER.debug("Number of added decision vertices: {}", decisionVertices.size());
   }
 
   private void addTimeSlotVertices() {
@@ -200,7 +200,7 @@ public class Problem {
       timeSlotVertices[slot] = timeSlotVertex;
       graph.addVertex(timeSlotVertex);
     }
-    LOGGER.info("Number of added time slot vertices: {}", timeSlotVertices.length);
+    LOGGER.debug("Number of added time slot vertices: {}", timeSlotVertices.length);
   }
 
   private void addVertices() {
