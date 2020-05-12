@@ -63,14 +63,15 @@ public class Tarjan implements StronglyConnectedComponentFinder {
         continue;
       } else if (!dfsIndex.containsKey(v)) {
         findSCC(v, threshold);
-        final int minIndex = Math.min(index, smallestReachableDfsIndex.get(v));
+        final int minIndex =
+            Math.min(smallestReachableDfsIndex.get(u), smallestReachableDfsIndex.get(v));
         smallestReachableDfsIndex.put(u, minIndex);
       } else if (isVertexOnStack.get(v)) {
         // If v is on the stack already, (u, v) is a back-edge in the DFS tree and therefore v is
         // not in the subtree of u. Because smallestReachableDfsIndex considers only vertices
         // reachable via the subtree of u we must stop at v and use dfSIndex(v) instead of
         // smallestReachableDfsIndex(v).
-        final int minIndex = Math.min(index, dfsIndex.get(v));
+        final int minIndex = Math.min(smallestReachableDfsIndex.get(u), dfsIndex.get(v));
         smallestReachableDfsIndex.put(u, minIndex);
       }
     }
