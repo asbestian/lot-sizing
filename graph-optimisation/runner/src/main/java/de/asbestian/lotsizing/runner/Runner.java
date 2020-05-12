@@ -21,27 +21,20 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import picocli.CommandLine;
 import picocli.CommandLine.Command;
-import picocli.CommandLine.Option;
 import picocli.CommandLine.Parameters;
 
 /** @author Sebastian Schenker */
 @Command(
     name = "graph-opt",
     mixinStandardHelpOptions = true,
-    version = "0.9",
-    description = "Production planning optimisation via graph algorithms.")
+    version = "1.0",
+    description = "Lot sizing optimisation via graph algorithms.")
 public class Runner implements Callable<Integer> {
 
   private final Logger LOGGER = LoggerFactory.getLogger(Runner.class);
 
   @Parameters(paramLabel = "file", description = "The file containing the problem " + "instance.")
   private String file;
-
-  @Option(names = "--edges", description = "The maximal number of edges each subgraph can have.")
-  private int edgeThreshold = 200;
-
-  @Option(names = "--iterations", description = "The maximal number of iterations.")
-  private int iterations = 15;
 
   public static void main(final String... args) {
     final int exitCode = new CommandLine(new Runner()).execute(args);
@@ -59,42 +52,46 @@ public class Runner implements Callable<Integer> {
     final Problem problem = new Problem(input);
     problem.build();
     final Schedule initSchedule = problem.computeInitialSchedule();
-    LOGGER.debug("Initial schedule: {}", initSchedule);
-    LOGGER.debug(
+    LOGGER.info("Initial schedule: {}", initSchedule);
+    LOGGER.info(
         "Initial cost: {} (changeover cost = {}, inventory cost = {})",
         initSchedule.getCost(),
         initSchedule.getChangeOverCost(),
         initSchedule.getInventoryCost());
     final Graph<Vertex, DefaultEdge> resGraph = problem.getResidualGraph(initSchedule);
-    visualiseGraph(problem, resGraph, "resgraph.jpg");
     final CycleFinder cycleFinder = new CycleFinder(resGraph);
     final BlockingQueue<Cycle> queue = new ArrayBlockingQueue<>(10);
-    cycleFinder.computeCycles(queue);
+    Thread computeCycles =
+        new Thread(
+            () -> {
+              try {
+                cycleFinder.computeCycles(queue);
+              } catch (InterruptedException e) {
+                e.printStackTrace();
+              }
+            });
+    computeCycles.start();
+    Schedule bestSchedule = initSchedule;
     while (true) {
       final Cycle cycle = queue.take();
       if (cycle.isEmpty()) {
         break;
       }
       final Schedule schedule = initSchedule.compute(cycle, input);
-      System.out.println("Cost:" + schedule.getCost());
+      if (schedule.getCost() < bestSchedule.getCost()) {
+        bestSchedule = schedule;
+        if (LOGGER.isDebugEnabled()) {
+          LOGGER.debug("Improvement: {} with cost: {}", bestSchedule, bestSchedule.getCost());
+        }
+      }
     }
-
-    /*final Visualisation bestScheduleVis = getScheduleVis(problem, bestSchedule);
-
-      final Schedule bestSchedule = initSchedule;
-      System.out.println("\nBest found schedule: " + bestSchedule);
-      System.out.println(
-          "Best found cost: "
-              + bestSchedule.getCost()
-              + " (changeover cost = "
-              + bestSchedule.getChangeOverCost()
-              + ", inventory cost = "
-              + bestSchedule.getInventoryCost()
-              + ")");
-      System.out.println();
-      visualiseGraph(problem, resGraph, "resgraph.jpg");
-      return 0;
-    }*/
+    LOGGER.info("Best schedule: {}", bestSchedule);
+    LOGGER.info(
+        "Best cost: {} (changeover cost = {}, inventory cost = {})",
+        bestSchedule.getCost(),
+        bestSchedule.getChangeOverCost(),
+        bestSchedule.getInventoryCost());
+    System.out.println();
     return 0;
   }
 

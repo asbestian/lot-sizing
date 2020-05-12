@@ -23,7 +23,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Finds all simple directed cycles
+ * Finds all simple directed cycles via Johnson's algorithm.
  *
  * @author Sebastian Schenker
  */
@@ -47,7 +47,7 @@ public class CycleFinder {
   public void computeCycles(final BlockingQueue<Cycle> queue) throws InterruptedException {
     clearState();
     int threshold = 0;
-    while (threshold < graph.vertexSet().size()) { // ToDo proper vertex indices
+    while (threshold < graph.vertexSet().size()) {
       final Collection<Set<Vertex>> stronglyConnectedComponents = tarjan.computeSCCs(threshold);
       if (stronglyConnectedComponents.isEmpty()) {
         return;
@@ -65,7 +65,7 @@ public class CycleFinder {
       findCyclesInSCC(threshold, leastVertex, leastSCC, queue);
       ++threshold;
     }
-    queue.put(new de.asbestian.lotsizing.graph.Cycle(Collections.emptyList()));
+    queue.put(new Cycle(Collections.emptyList()));
   }
 
   private void clearState() {

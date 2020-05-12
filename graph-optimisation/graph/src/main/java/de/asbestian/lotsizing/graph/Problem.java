@@ -180,7 +180,7 @@ public class Problem {
         }
       }
     }
-    LOGGER.info("Number of added demand vertices: {}", counter);
+    LOGGER.debug("Number of added demand vertices: {}", counter);
   }
 
   private void addDecisionVertices() {
@@ -191,7 +191,7 @@ public class Problem {
         graph.addVertex(decisionVertex);
       }
     }
-    LOGGER.info("Number of added decision vertices: {}", decisionVertices.size());
+    LOGGER.debug("Number of added decision vertices: {}", decisionVertices.size());
   }
 
   private void addTimeSlotVertices() {
@@ -200,7 +200,7 @@ public class Problem {
       timeSlotVertices[slot] = timeSlotVertex;
       graph.addVertex(timeSlotVertex);
     }
-    LOGGER.info("Number of added time slot vertices: {}", timeSlotVertices.length);
+    LOGGER.debug("Number of added time slot vertices: {}", timeSlotVertices.length);
   }
 
   private void addVertices() {

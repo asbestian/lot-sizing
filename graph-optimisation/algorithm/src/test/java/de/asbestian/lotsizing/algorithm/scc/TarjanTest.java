@@ -108,7 +108,7 @@ class TarjanTest {
   }
 
   @Test
-  void initialResGraphOf5TimeSlot2TypesInstance_superSinkInComponentOfSize12() {
+  void initialResGraphOfFiveTimeSlotsAnd2TypesInstance_superSinkInComponentOfSizeTwelve() {
     final Graph<Vertex, DefaultEdge> graph = new SimpleDirectedGraph<>(DefaultEdge.class);
     final List<Vertex> vertices = new ArrayList<>(20);
     vertices.add(0, new SuperSink(0));

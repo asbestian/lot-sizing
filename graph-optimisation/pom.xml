@@ -6,7 +6,7 @@
 
   <groupId>de.asbestian.lotsizing</groupId>
   <artifactId>graph-optimisation</artifactId>
-  <version>0.9</version>
+  <version>1.0</version>
   <packaging>pom</packaging>
 
   <url>https://github.com/asbestian/lot-sizing</url>
