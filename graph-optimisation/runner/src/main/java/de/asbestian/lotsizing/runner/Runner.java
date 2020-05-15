@@ -9,6 +9,8 @@ import de.asbestian.lotsizing.input.Input;
 import de.asbestian.lotsizing.visualisation.Visualisation;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.time.Duration;
+import java.time.Instant;
 import java.util.List;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
@@ -21,6 +23,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import picocli.CommandLine;
 import picocli.CommandLine.Command;
+import picocli.CommandLine.Option;
 import picocli.CommandLine.Parameters;
 
 /** @author Sebastian Schenker */
@@ -33,8 +36,18 @@ public class Runner implements Callable<Integer> {
 
   private final Logger LOGGER = LoggerFactory.getLogger(Runner.class);
 
-  @Parameters(paramLabel = "file", description = "The file containing the problem " + "instance.")
+  @Parameters(paramLabel = "file", description = "The file containing the problem instance.")
   private String file;
+
+  @Option(
+      names = {"-t", "--timeLimit"},
+      description = "Time limit (in seconds) for computation. Default is no time limit.")
+  private double timeLimit = Double.POSITIVE_INFINITY;
+
+  @Option(
+      names = {"-b", "--blockingQueueCapacity"},
+      description = "Number of elements available in blocking queue. Default is 10.")
+  private int blockingQueueCapacity = 10;
 
   public static void main(final String... args) {
     final int exitCode = new CommandLine(new Runner()).execute(args);
@@ -47,6 +60,7 @@ public class Runner implements Callable<Integer> {
       System.err.println("Given file cannot be found.");
       return 1;
     }
+    final Instant start = Instant.now();
     final Input input = new Input();
     input.read(file);
     final Problem problem = new Problem(input);
@@ -60,7 +74,7 @@ public class Runner implements Callable<Integer> {
         initSchedule.getInventoryCost());
     final Graph<Vertex, DefaultEdge> resGraph = problem.getResidualGraph(initSchedule);
     final CycleFinder cycleFinder = new CycleFinder(resGraph);
-    final BlockingQueue<Cycle> queue = new ArrayBlockingQueue<>(10);
+    final BlockingQueue<Cycle> queue = new ArrayBlockingQueue<>(blockingQueueCapacity);
     Thread computeCycles =
         new Thread(
             () -> {
@@ -72,26 +86,28 @@ public class Runner implements Callable<Integer> {
             });
     computeCycles.start();
     Schedule bestSchedule = initSchedule;
-    while (true) {
-      final Cycle cycle = queue.take();
+    boolean searchSpaceExhausted = false;
+    while (Duration.between(start, Instant.now()).toSeconds() < timeLimit) {
+      Cycle cycle = queue.take();
       if (cycle.isEmpty()) {
+        searchSpaceExhausted = true;
+        LOGGER.debug("Search space exhausted.");
         break;
       }
       final Schedule schedule = initSchedule.compute(cycle, input);
       if (schedule.getCost() < bestSchedule.getCost()) {
+        LOGGER.info("Improvement: {} with overall cost: {}", schedule, schedule.getCost());
         bestSchedule = schedule;
-        if (LOGGER.isDebugEnabled()) {
-          LOGGER.debug("Improvement: {} with cost: {}", bestSchedule, bestSchedule.getCost());
-        }
       }
     }
-    LOGGER.info("Best schedule: {}", bestSchedule);
+    LOGGER.info("{} schedule: {}", searchSpaceExhausted ? "Optimal" : "Best", bestSchedule);
     LOGGER.info(
-        "Best cost: {} (changeover cost = {}, inventory cost = {})",
+        "{} cost: {} (changeover cost = {}, inventory cost = {})",
+        searchSpaceExhausted ? "Optimal" : "Best",
         bestSchedule.getCost(),
         bestSchedule.getChangeOverCost(),
         bestSchedule.getInventoryCost());
-    System.out.println();
+    LOGGER.info("Time spent: {} seconds.", Duration.between(start, Instant.now()).toSeconds());
     return 0;
   }
 
