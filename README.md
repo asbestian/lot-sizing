@@ -1,16 +1,40 @@
 About
-------
-This repository contains code to solve a _lot sizing problem_ which 
-is described in [problem\_description.pdf](./problem_description.pdf)
+-----
+This repository contains code to solve a [lot sizing problem](./doc/problem\_description.pdf) via a graph 
+algorithmic approach based on enumerating directed cycles in a residual graph which 
+represents all feasible schedules.
 
-Further information is available at [OptimizationHub](https://opthub.uniud.it/problem/lsp)
+An outline of the approach can be found in [doc/graph-optimisation.pdf](./doc/graph-optimisation.pdf).
+
+Further information is also available at [OptimizationHub](https://opthub.uniud.it/problem/lsp)
 
 Folders
 --------
-[graph_optimisation](./graph-optimisation) - contains code which uses a graph algorithmic approach for the lot sizing problem
+[algorithm](./algorithm) - part of Java implementation
+
+[doc](./doc) - contains further documentation
+
+[graph](./graph) - part of Java implementation
+
+[input](./input) - part of Java implementation
 
 [instances](./instances) - contains instance files
 
+[runner](./runner) - part of Java implementation
+
+[visualisation](./visualisation) - part of Java implementation
+
+Compilation & Execution
+-----------------------
+
+1. `mvn package`
+2. `java -jar runner/target/graph-opt-jar-with-dependencies.jar problem_instance`
+
+To see available command line arguments execute: `java -jar runner/target/graph-opt-jar-with-dependencies.jar -h`
+
+To change logging level to _debug_ add `-Dorg.slf4j.simpleLogger.defaultLogLevel=debug` to `java ...` command.
+
+
 Authors
 -------
-[Sebastian Schenker](https://github.com/asbestian)
+[Dr. Sebastian Schenker](https://github.com/asbestian)
