@@ -1,8 +1,6 @@
 \documentclass{beamer}
 \usetheme{Boadilla}
-\beamertemplatenavigationsymbolsempty
-%gets rid of bottom navigation bars
-\setbeamertemplate{footline}[page number]{}
+%\beamertemplatenavigationsymbolsempty
 %gets rid of navigation symbols
 \setbeamertemplate{navigation symbols}{}
 \usepackage[latin1]{inputenc}
@@ -34,7 +32,7 @@
 \newcommand{\resedges}[0]{\overset{{}_{\leftrightarrow}}{E}}
 
 \title{Graph algorithmic approach}
-\author{Sebastian Schenker}
+\author{Dr. Sebastian Schenker}
 \date{}
 
 \begin{document}
@@ -438,127 +436,6 @@
   \begin{itemize}
     \item schedule: [ 1 0 -1 1 ] $\Rightarrow$ [ 1 0 1 -1 ]
   \end{itemize}
-\end{frame}
-
-\begin{frame}
-  \frametitle{Algorithms for finding cycles}
-  \begin{figure}
-    \includegraphics[width=0.8\textwidth]{jgrapht.pdf}
-  \end{figure}
-\end{frame}
-
-\begin{frame}[fragile]
-  \frametitle{Number of cycles grows exponentially in instance size}
-\begin{figure}
-\begin{minipage}{0.45\textwidth}
-\footnotesize{\begin{verbatim}
-15
-5
-0 0 0 0 0 0 0 0 1 0 0 0 0 0 0
-0 0 0 0 0 0 0 0 0 1 0 0 1 0 0
-0 0 0 0 0 0 0 0 0 0 1 0 0 0 0
-0 0 0 0 0 0 0 0 0 0 0 0 0 1 0
-0 0 0 0 0 0 0 0 0 1 1 0 0 0 0
-10
-0 78 86 93 120
-165 0 193 213 178
-214 170 0 190 185
-178 177 185 0 196
-201 199 215 190 0
-\end{verbatim}
-  }
-\begin{itemize}
-  \item 59118 cycles found in 0.359 seconds
-\end{itemize}
-\end{minipage}
-\hfill
-\begin{minipage}{0.45\textwidth}
-  \footnotesize{\begin{verbatim}
-  15
-  6
-  0 0 0 0 0 0 0 0 1 0 0 0 0 0 0
-  0 0 0 0 0 0 0 0 0 1 0 0 1 0 0
-  0 0 0 0 0 0 0 0 0 0 1 0 0 0 0
-  0 0 0 0 0 0 0 0 0 0 0 0 0 1 0
-  0 0 0 0 0 0 0 0 0 1 1 0 0 0 0
-  0 0 0 0 0 0 0 0 0 0 1 0 0 0 1
-  10
-  0 78 86 93 120 12
-  165 0 193 213 178 12
-  214 170 0 190 185 12
-  178 177 185 0 196 12
-  201 199 215 190 0 12
-  201 100 88 190 14 0
-\end{verbatim}
-  }
-  \begin{itemize}
-    \item 2646487 cycles found in 8.463 seconds
-  \end{itemize}
-\end{minipage}
-\end{figure}
-\end{frame}
-
-\begin{frame}[fragile]
-  \frametitle{Limit number of cycles by considering (different) subgraph(s)}
-  \begin{figure}
-      \begin{tikzpicture}[transform shape,scale=0.6]
-      \useasboundingbox(0,0) rectangle (14,8);
-      \tikzset{V/.style = {shape=circle, draw, text=black}}
-      \tikzset{E/.style = {draw,text=black,->}}
-      \node[V,text=red](d0) at (3,7) {$a$};
-      \node[V,text=green](d1) at (7,7) {$b$};
-      \node[V,text=blue](d2) at (11,7) {$c$};
-      \node[V](x00) at (0,5) {$x^0_0$};
-      \node[V](x01) at (2,5) {$x^0_1$};
-      \node[V](x02) at (4,5) {$x^0_2$};
-      \node[V](x03) at (6,5) {$x^0_3$};
-      \node[V](x10) at (8,5) {$x^1_0$};
-      \node[V](x11) at (10,5) {$x^1_1$};
-      \node[V](x12) at (12,5) {$x^1_2$};
-      \node[V](x13) at (14,5) {$x^1_3$};
-      \node[V](t0) at (3,3) {$t0$};
-      \node[V](t1) at (6,3) {$t1$};
-      \node[V](t2) at (9,3) {$t2$};
-      \node[V](t3) at (12,3) {$t3$};
-      \node[V](t) at (7,1) {\small{$sink$}};
-      \draw[E](d0) to (x00);
-      \draw[E](x01) to (d0);
-      \draw[E](x10) to (d1);
-      \draw[E](d1) to (x11);
-      \draw[E](d1) to (x12);
-      \draw[E](d2) to (x10);
-      \draw[E](d2) to (x12);
-      \draw[E](x00) to (t0);
-      \draw[E](t0) to (x10);
-      \draw[E](t1) to (x01);
-      \draw[E](x12) to (t2);
-      \draw[E](x03) to (t3);
-      \draw[E] (t) to (t0);
-      \draw[E] (t) to (t1);
-      \draw[E](t) to (t3);
-      \end{tikzpicture}
-  \end{figure}
-\end{frame}
-
-\begin{frame}
-  \frametitle{Algorithmic idea}
-  \begin{center}
-  {\small
-  \begin{algorithmic}[1]
-    \State Compute initial feasible schedule $s$ 
-    \State $\text{done} \gets \text{false}$
-    \While{!done}
-     \State Find set $C$ of directed cycles in (set of) residual subgraph(s)
-     \State Compute best schedule $\bar{s}$ for $(C,s)$
-     \If{cost($\bar{s}$) $<$ cost($s$)}
-     \State $s \gets \bar{s}$
-      \Else
-      \State $\text{done} \gets \text{true}$
-      \EndIf
-     \EndWhile
-  \end{algorithmic}
-}
-\end{center}
 \end{frame}
 
 \end{document}
