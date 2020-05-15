@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.org/asbestian/lot-sizing.svg?branch=master)](https://travis-ci.org/asbestian/lot-sizing)
+
 About
 -----
 This repository contains code to solve a [lot sizing problem](./doc/problem\_description.pdf) via a graph 
@@ -37,4 +39,4 @@ To change logging level to _debug_ add `-Dorg.slf4j.simpleLogger.defaultLogLevel
 
 Authors
 -------
-[Dr. Sebastian Schenker](https://github.com/asbestian)
+[Sebastian Schenker](https://github.com/asbestian)
