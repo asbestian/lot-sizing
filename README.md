@@ -2,8 +2,8 @@
 
 About
 -----
-This repository contains code to solve a [lot sizing problem](./doc/problem\_description.pdf) via a graph 
-algorithmic approach based on enumerating directed cycles in a residual graph which 
+We consider the discrete, single-machine, multi-item, single-level [lot sizing problem](./doc/problem\_description.pdf). 
+The problem is solved via a graph algorithmic approach based on enumerating directed cycles in a residual graph which 
 represents all feasible schedules.
 
 An outline of the approach can be found in [doc/graph-optimisation.pdf](./doc/graph-optimisation.pdf).
