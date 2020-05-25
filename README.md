@@ -32,9 +32,9 @@ Compilation & Execution
 1. `mvn package`
 2. `java -jar runner/target/graph-opt-jar-with-dependencies.jar problem_instance`
 
-To see available command line arguments execute: `java -jar runner/target/graph-opt-jar-with-dependencies.jar -h`
-
-To change logging level to _debug_ add `-Dorg.slf4j.simpleLogger.defaultLogLevel=debug` to `java ...` command.
+* To see available command line arguments execute: `java -jar runner/target/graph-opt-jar-with-dependencies.jar -h`
+* To change logging level to _debug_ add `-Dorg.slf4j.simpleLogger.defaultLogLevel=debug` to `java` command.
+* Default logging output target is `System.err`. To change target add `-Dorg.slf4j.simpleLogger.logFile=file` to `java` command.
 
 
 Authors
