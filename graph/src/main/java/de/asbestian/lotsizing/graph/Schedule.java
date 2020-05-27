@@ -5,6 +5,8 @@ import de.asbestian.lotsizing.graph.vertex.DemandVertex;
 import de.asbestian.lotsizing.graph.vertex.Vertex;
 import de.asbestian.lotsizing.graph.vertex.Vertex.Type;
 import de.asbestian.lotsizing.input.Input;
+import it.unimi.dsi.fastutil.ints.IntArrayList;
+import it.unimi.dsi.fastutil.ints.IntList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
@@ -24,6 +26,7 @@ public class Schedule {
   public Schedule(final Input input, final Collection<Pair<Vertex, Vertex>> usedEdges) {
     this.edges = new HashSet<>();
     this.schedule = new int[input.getNumTimeSlots()];
+
     Arrays.fill(schedule, -1);
     usedEdges.stream()
         .peek(this.edges::add)
@@ -41,6 +44,16 @@ public class Schedule {
     this.inventoryCost = computeInventoryCost(this.edges, input.getInventoryCost());
   }
 
+  public IntList getScheduleWithoutIdleSlots() {
+    return getScheduleWithoutIdleSlots(this.schedule);
+  }
+
+  private static IntList getScheduleWithoutIdleSlots(final int[] schedule) {
+    return Arrays.stream(schedule)
+        .filter(type -> type != -1)
+        .collect(IntArrayList::new, IntArrayList::add, IntArrayList::addAll);
+  }
+
   private Schedule(
       final Collection<Pair<Vertex, Vertex>> edges,
       final int[] schedule,
@@ -52,15 +65,13 @@ public class Schedule {
     this.inventoryCost = inventoryCost;
   }
 
-  private static double computeChangeoverCost(final int[] schedule, final Input input) {
+  private double computeChangeoverCost(final int[] schedule, final Input input) {
     double cost = 0.;
-    final int[] scheduleWithoutIdleTimeSlots =
-        Arrays.stream(schedule)
-            .filter(type -> type != -1) // remove idle time slots of schedule
-            .toArray();
-    for (int j = 1; j < scheduleWithoutIdleTimeSlots.length; ++j) {
-      final var predType = scheduleWithoutIdleTimeSlots[j - 1];
-      final var currentType = scheduleWithoutIdleTimeSlots[j];
+    final IntList scheduleWithoutIdleTimeSlots = getScheduleWithoutIdleSlots(schedule);
+
+    for (int j = 1; j < scheduleWithoutIdleTimeSlots.size(); ++j) {
+      final int predType = scheduleWithoutIdleTimeSlots.getInt(j - 1);
+      final int currentType = scheduleWithoutIdleTimeSlots.getInt(j);
       cost += input.getChangeOverCost(predType, currentType);
     }
     return cost;
