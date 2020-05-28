@@ -85,6 +85,27 @@ class ProblemTest {
   }
 
   @Test
+  void computeOptimalInventorySchedule() {
+    final String path =
+        "src/test/resources/Instance-4timeslots_2types.txt"; // instance has two feasible solutions
+    assert Files.exists(Paths.get(path));
+    final Input input = new Input();
+    input.read(path);
+    final Problem problem = new Problem(input);
+    problem.build();
+
+    final Schedule schedule = problem.computeOptimalInventoryCostSchedule();
+    final String expectedSchedule = "[1, 0, -1, 1]";
+    final int expectedInventoryCost = 0;
+    final int expectedChangerOverCost = 4 + 3;
+
+    assertEquals(expectedSchedule, schedule.toString());
+    assertEquals(expectedInventoryCost, schedule.getInventoryCost());
+    assertEquals(expectedChangerOverCost, schedule.getChangeOverCost());
+    assertEquals(expectedInventoryCost + expectedChangerOverCost, schedule.getCost());
+  }
+
+  @Test
   void getResidualGraph_singleFeasibleSchedule() {
     final String path =
         "src/test/resources/Instance-3timeslots_3types.txt"; // instance has one feasible solution

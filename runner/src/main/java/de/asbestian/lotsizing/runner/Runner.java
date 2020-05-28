@@ -65,13 +65,6 @@ public class Runner implements Callable<Integer> {
     input.read(file);
     final Problem problem = new Problem(input);
     problem.build();
-    final Schedule randomSchedule = problem.computeRandomSchedule();
-    LOGGER.debug("Random schedule: {}", randomSchedule);
-    LOGGER.debug(
-        "Random cost: {} (changeover cost = {}, inventory cost = {})",
-        randomSchedule.getCost(),
-        randomSchedule.getChangeOverCost(),
-        randomSchedule.getInventoryCost());
     final Schedule initSchedule = problem.computeOptimalInventoryCostSchedule();
     LOGGER.info("Initial schedule: {}", initSchedule);
     LOGGER.info(
