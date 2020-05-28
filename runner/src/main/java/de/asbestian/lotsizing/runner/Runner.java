@@ -88,6 +88,7 @@ public class Runner implements Callable<Integer> {
     computeCycles.start();
     Schedule bestSchedule = initSchedule;
     boolean searchSpaceExhausted = false;
+    long iterations = 0;
     while (Duration.between(start, Instant.now()).toSeconds() < timeLimit) {
       final Cycle cycle = queue.take();
       if (cycle.isEmpty()) {
@@ -100,7 +101,9 @@ public class Runner implements Callable<Integer> {
         LOGGER.info("Improvement: {} with overall cost: {}", schedule, schedule.getCost());
         bestSchedule = schedule;
       }
+      ++iterations;
     }
+    LOGGER.debug("Number of investigated cycles: {}", iterations);
     LOGGER.info("{} schedule: {}", searchSpaceExhausted ? "Optimal" : "Best", bestSchedule);
     LOGGER.info(
         "{} cost: {} (changeover cost = {}, inventory cost = {})",
