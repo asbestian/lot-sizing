@@ -66,9 +66,10 @@ class ScheduleTest {
     input.read(path);
     final Problem problem = new Problem(input);
     problem.build();
-    final Schedule initSchedule = problem.computeRandomSchedule(); //
+    final Schedule initSchedule = problem.computeRandomSchedule();
     assertEquals("[1, 0, 1, -1]", initSchedule.toString());
     final Graph<Vertex, DefaultEdge> resGraph = problem.getResidualGraph(initSchedule);
+
     final List<Cycle> cycles = Problem.computeCycles(resGraph);
     assertEquals(1, cycles.size());
     final String expectedSchedule = "[1, 0, -1, 1]";

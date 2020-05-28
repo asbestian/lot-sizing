@@ -19,7 +19,6 @@ import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import org.jgrapht.Graph;
-import org.jgrapht.alg.cycle.JohnsonSimpleCycles;
 import org.jgrapht.alg.flow.PushRelabelMFImpl;
 import org.jgrapht.alg.flow.mincost.CapacityScalingMinimumCostFlow;
 import org.jgrapht.alg.flow.mincost.MinimumCostFlowProblem;
@@ -29,7 +28,6 @@ import org.jgrapht.alg.util.Pair;
 import org.jgrapht.graph.AsWeightedGraph;
 import org.jgrapht.graph.DefaultEdge;
 import org.jgrapht.graph.SimpleDirectedGraph;
-import org.jgrapht.graph.SimpleDirectedWeightedGraph;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -81,16 +79,6 @@ public class Problem {
     this.timeSlotVertices = new TimeSlotVertex[input.getNumTimeSlots()];
   }
 
-  public static Graph<Vertex, DefaultEdge> buildEmptyGraph() {
-    return new SimpleDirectedWeightedGraph<>(DefaultEdge.class);
-    /*GraphTypeBuilder.<Vertex, DefaultEdge>directed()
-    .allowingMultipleEdges(false)
-    .allowingSelfLoops(false)
-    .edgeClass(DefaultEdge.class)
-    .weighted(true)
-    .buildGraph();*/
-  }
-
   public void build() {
     addVertices();
     addEdges();
@@ -122,7 +110,7 @@ public class Problem {
   }
 
   public Graph<Vertex, DefaultEdge> getResidualGraph(final Schedule schedule) {
-    final Graph<Vertex, DefaultEdge> resGraph = buildEmptyGraph();
+    final Graph<Vertex, DefaultEdge> resGraph = new SimpleDirectedGraph<>(DefaultEdge.class);
     graph.vertexSet().forEach(resGraph::addVertex); // add graph vertices to residual graph
     for (final var edge : graph.edgeSet()) { // add edges with positive residual capacity
       final Vertex source = graph.getEdgeSource(edge);
@@ -194,17 +182,18 @@ public class Problem {
     // compute max flow from super source to super sink
     final var maxFlowFinder = new PushRelabelMFImpl<>(weightedGraph);
     final var maxFlow = maxFlowFinder.getMaximumFlow(superSource, superSink);
-    if (maxFlow.getValue() != demandVertices.length) {
-      throw new OptimisationException(
-          "Computed max flow value: "
-              + maxFlow.getValue()
-              + "; Expected max flow value: "
-              + demandVertices.length);
-    }
     // remove super source and corresponding edges
     graph.removeVertex(superSource);
     assert graph.edgeSet().size() == originalNumberOfEdges;
     assert graph.vertexSet().size() == originalNumberOfVertices;
+
+    if (maxFlow.getValue() != demandVertices.length) {
+      throw new OptimisationException(
+          "Computed max flow value: "
+              + maxFlow.getValue()
+              + "; Expected: "
+              + demandVertices.length);
+    }
     final Collection<Pair<Vertex, Vertex>> usedEdges =
         graph.edgeSet().stream()
             .filter(edge -> maxFlow.getFlow(edge) > 0.)
@@ -212,12 +201,6 @@ public class Problem {
             .collect(Collectors.toUnmodifiableList());
     assert usedEdges.size() == 3 * demandVertices.length;
     return new Schedule(input, usedEdges);
-  }
-
-  public static <E> List<Cycle> computeCycles(final Graph<Vertex, E> graph) {
-    final var cycleFinder = new JohnsonSimpleCycles<>(graph);
-    final List<List<Vertex>> cycles = cycleFinder.findSimpleCycles();
-    return cycles.stream().map(Cycle::new).collect(Collectors.toList());
   }
 
   private void addDemandVertices() {

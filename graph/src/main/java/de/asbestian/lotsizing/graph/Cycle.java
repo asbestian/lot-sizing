@@ -13,7 +13,7 @@ import org.slf4j.LoggerFactory;
 /** @author Sebastian Schenker */
 public class Cycle {
 
-  private static final Logger LOG = LoggerFactory.getLogger(Cycle.class);
+  private static final Logger LOGGER = LoggerFactory.getLogger(Cycle.class);
 
   private final List<Pair<Vertex, Vertex>> originalGraphEdges;
   private final List<Pair<Vertex, Vertex>> reverseGraphEdges;
@@ -40,7 +40,7 @@ public class Cycle {
       final var target = vertices.get(0);
       addToDataStructures(source, target);
       if (activatedDecisionVertices.size() != deactivatedDecisionVertices.size()) {
-        LOG.warn(
+        LOGGER.warn(
             "Number of activated decision vertices unequal to number of deactivated decision vertices.");
       }
     }

@@ -1,7 +1,6 @@
 package de.asbestian.lotsizing.graph;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import de.asbestian.lotsizing.graph.vertex.SuperSink;
 import de.asbestian.lotsizing.graph.vertex.Vertex;
@@ -15,14 +14,6 @@ import org.junit.jupiter.api.Test;
 
 /** @author Sebastian Schenker */
 class ProblemTest {
-
-  @Test
-  void buildEmptyGraph() {
-    final Graph<Vertex, DefaultEdge> graph = Problem.buildEmptyGraph();
-
-    assertTrue(graph.vertexSet().isEmpty());
-    assertTrue(graph.edgeSet().isEmpty());
-  }
 
   @Test
   void getVertices() {
@@ -78,6 +69,22 @@ class ProblemTest {
   }
 
   @Test
+  void computeSchedule_randomScheduleAndOptimalInventoryScheduleCoincide() {
+    final String path =
+        "src/test/resources/Instance-3timeslots_3types.txt"; // instance has one feasible solution
+    assert Files.exists(Paths.get(path));
+    final Input input = new Input();
+    input.read(path);
+    final Problem problem = new Problem(input);
+    problem.build();
+
+    final Schedule randSchedule = problem.computeRandomSchedule();
+    final Schedule inventorySchedule = problem.computeOptimalInventoryCostSchedule();
+
+    assertEquals(randSchedule, inventorySchedule);
+  }
+
+  @Test
   void getResidualGraph_singleFeasibleSchedule() {
     final String path =
         "src/test/resources/Instance-3timeslots_3types.txt"; // instance has one feasible solution
@@ -122,38 +129,5 @@ class ProblemTest {
 
     assertEquals(3, resGraph.outDegreeOf(superSink));
     assertEquals(0, resGraph.inDegreeOf(superSink));
-  }
-
-  @Test
-  void computeCycles_singleFeasibleSchedule() {
-    final String path =
-        "src/test/resources/Instance-3timeslots_3types.txt"; // instance has one feasible solution
-    assert Files.exists(Paths.get(path));
-    final Input input = new Input();
-    input.read(path);
-    final Problem problem = new Problem(input);
-    problem.build();
-
-    final Schedule schedule = problem.computeRandomSchedule();
-    final Graph<Vertex, DefaultEdge> resGraph = problem.getResidualGraph(schedule);
-
-    assertTrue(Problem.computeCycles(resGraph).isEmpty());
-  }
-
-  @Test
-  void computeCycles_twoFeasibleSchedules() {
-    final String path =
-        "src/test/resources/Instance-4timeslots_2types.txt"; // instance has two feasible solutions
-    assert Files.exists(Paths.get(path));
-    final Input input = new Input();
-    input.read(path);
-    final Problem problem = new Problem(input);
-    problem.build();
-
-    final Schedule schedule = problem.computeRandomSchedule();
-    final Graph<Vertex, DefaultEdge> resGraph = problem.getResidualGraph(schedule);
-    final List<Cycle> cycles = Problem.computeCycles(resGraph);
-
-    assertEquals(1, cycles.size(), "Expected number of cycles: 1, found: " + cycles.size());
   }
 }

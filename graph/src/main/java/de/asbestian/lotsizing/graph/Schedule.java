@@ -1,13 +1,16 @@
 package de.asbestian.lotsizing.graph;
 
-import de.asbestian.lotsizing.input.Input;
 import de.asbestian.lotsizing.graph.vertex.DecisionVertex;
 import de.asbestian.lotsizing.graph.vertex.DemandVertex;
 import de.asbestian.lotsizing.graph.vertex.Vertex;
 import de.asbestian.lotsizing.graph.vertex.Vertex.Type;
+import de.asbestian.lotsizing.input.Input;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
 import org.jgrapht.alg.util.Pair;
-
-import java.util.*;
 
 /** @author Sebastian Schenker */
 public class Schedule {
@@ -120,6 +123,20 @@ public class Schedule {
     final double newInventoryCost = computeInventoryCost(usedEdges, input.getInventoryCost());
     assert usedEdges.size() == this.edges.size();
     return new Schedule(usedEdges, newSchedule, newChangeOverCost, newInventoryCost);
+  }
+
+  @Override
+  public boolean equals(final Object obj) {
+    if (obj == this) {
+      return true;
+    }
+    if (!(obj instanceof Schedule)) {
+      return false;
+    }
+    final Schedule other = (Schedule) obj;
+    return Arrays.equals(this.schedule, other.schedule)
+        && this.edges.size() == other.edges.size()
+        && this.edges.containsAll(other.edges);
   }
 
   @Override
