@@ -1,18 +1,17 @@
 package de.asbestian.lotsizing.graph;
 
-import de.asbestian.lotsizing.input.Input;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
 import de.asbestian.lotsizing.graph.vertex.SuperSink;
 import de.asbestian.lotsizing.graph.vertex.Vertex;
-import org.jgrapht.Graph;
-import org.jgrapht.graph.DefaultEdge;
-import org.junit.jupiter.api.Test;
-
+import de.asbestian.lotsizing.input.Input;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.List;
-
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import org.jgrapht.Graph;
+import org.jgrapht.graph.DefaultEdge;
+import org.junit.jupiter.api.Test;
 
 /** @author Sebastian Schenker */
 class ProblemTest {
@@ -69,7 +68,7 @@ class ProblemTest {
     final Problem problem = new Problem(input);
     problem.build();
 
-    final Schedule schedule = problem.computeInitialSchedule();
+    final Schedule schedule = problem.computeRandomSchedule();
 
     assertEquals(expectedSchedule, schedule.toString());
     assertEquals(expectedInventoryCost, schedule.getInventoryCost());
@@ -92,7 +91,7 @@ class ProblemTest {
     final List<Vertex> timeSlotVertices = problem.getTimeSlotVertices();
     final SuperSink superSink = problem.getSuperSink();
 
-    final Schedule schedule = problem.computeInitialSchedule();
+    final Schedule schedule = problem.computeRandomSchedule();
     final Graph<Vertex, DefaultEdge> resGraph = problem.getResidualGraph(schedule);
 
     assertEquals(15, resGraph.edgeSet().size());
@@ -135,7 +134,7 @@ class ProblemTest {
     final Problem problem = new Problem(input);
     problem.build();
 
-    final Schedule schedule = problem.computeInitialSchedule();
+    final Schedule schedule = problem.computeRandomSchedule();
     final Graph<Vertex, DefaultEdge> resGraph = problem.getResidualGraph(schedule);
 
     assertTrue(Problem.computeCycles(resGraph).isEmpty());
@@ -151,7 +150,7 @@ class ProblemTest {
     final Problem problem = new Problem(input);
     problem.build();
 
-    final Schedule schedule = problem.computeInitialSchedule();
+    final Schedule schedule = problem.computeRandomSchedule();
     final Graph<Vertex, DefaultEdge> resGraph = problem.getResidualGraph(schedule);
     final List<Cycle> cycles = Problem.computeCycles(resGraph);
 

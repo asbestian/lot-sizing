@@ -65,22 +65,30 @@ public class Runner implements Callable<Integer> {
     input.read(file);
     final Problem problem = new Problem(input);
     problem.build();
-    final Schedule initSchedule = problem.computeInitialSchedule();
+    final Schedule randomSchedule = problem.computeRandomSchedule();
+    LOGGER.debug("Random schedule: {}", randomSchedule);
+    LOGGER.debug(
+        "Random cost: {} (changeover cost = {}, inventory cost = {})",
+        randomSchedule.getCost(),
+        randomSchedule.getChangeOverCost(),
+        randomSchedule.getInventoryCost());
+    final Schedule initSchedule = problem.computeOptimalInventoryCostSchedule();
     LOGGER.info("Initial schedule: {}", initSchedule);
     LOGGER.info(
-        "Initial cost: {} (changeover cost = {}, inventory cost = {})",
+        "Cost: {} (changeover cost = {}, inventory cost = {})",
         initSchedule.getCost(),
         initSchedule.getChangeOverCost(),
         initSchedule.getInventoryCost());
+
     final Graph<Vertex, DefaultEdge> resGraph = problem.getResidualGraph(initSchedule);
     final CycleFinder cycleFinder = new CycleFinder(resGraph);
     final BlockingQueue<Cycle> queue = new ArrayBlockingQueue<>(blockingQueueCapacity);
-    Thread computeCycles =
+    final Thread computeCycles =
         new Thread(
             () -> {
               try {
                 cycleFinder.computeCycles(queue);
-              } catch (InterruptedException e) {
+              } catch (final InterruptedException e) {
                 e.printStackTrace();
               }
             });
@@ -88,7 +96,7 @@ public class Runner implements Callable<Integer> {
     Schedule bestSchedule = initSchedule;
     boolean searchSpaceExhausted = false;
     while (Duration.between(start, Instant.now()).toSeconds() < timeLimit) {
-      Cycle cycle = queue.take();
+      final Cycle cycle = queue.take();
       if (cycle.isEmpty()) {
         searchSpaceExhausted = true;
         LOGGER.debug("Search space exhausted.");
@@ -119,7 +127,7 @@ public class Runner implements Callable<Integer> {
         problem.getDecisionVertices(),
         problem.getTimeSlotVertices(),
         problem.getSuperSink());
-    List<Pair<Vertex, Vertex>> edges =
+    final List<Pair<Vertex, Vertex>> edges =
         graph.edgeSet().stream()
             .map(edge -> Pair.of(graph.getEdgeSource(edge), graph.getEdgeTarget(edge)))
             .collect(Collectors.toList());

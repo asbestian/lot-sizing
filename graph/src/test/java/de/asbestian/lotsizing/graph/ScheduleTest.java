@@ -1,20 +1,19 @@
 package de.asbestian.lotsizing.graph;
 
-import de.asbestian.lotsizing.input.Input;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
 import de.asbestian.lotsizing.graph.vertex.SuperSink;
 import de.asbestian.lotsizing.graph.vertex.Vertex;
-import org.jgrapht.Graph;
-import org.jgrapht.alg.util.Pair;
-import org.jgrapht.graph.DefaultEdge;
-import org.junit.jupiter.api.Test;
-
+import de.asbestian.lotsizing.input.Input;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
-
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import org.jgrapht.Graph;
+import org.jgrapht.alg.util.Pair;
+import org.jgrapht.graph.DefaultEdge;
+import org.junit.jupiter.api.Test;
 
 /** @author Sebastian Schenker */
 class ScheduleTest {
@@ -67,7 +66,7 @@ class ScheduleTest {
     input.read(path);
     final Problem problem = new Problem(input);
     problem.build();
-    final Schedule initSchedule = problem.computeInitialSchedule(); //
+    final Schedule initSchedule = problem.computeRandomSchedule(); //
     assertEquals("[1, 0, 1, -1]", initSchedule.toString());
     final Graph<Vertex, DefaultEdge> resGraph = problem.getResidualGraph(initSchedule);
     final List<Cycle> cycles = Problem.computeCycles(resGraph);
