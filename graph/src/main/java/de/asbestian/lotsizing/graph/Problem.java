@@ -5,22 +5,29 @@ import de.asbestian.lotsizing.graph.vertex.DemandVertex;
 import de.asbestian.lotsizing.graph.vertex.SuperSink;
 import de.asbestian.lotsizing.graph.vertex.TimeSlotVertex;
 import de.asbestian.lotsizing.graph.vertex.Vertex;
+import de.asbestian.lotsizing.graph.vertex.Vertex.Type;
 import de.asbestian.lotsizing.input.Input;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import org.jgrapht.Graph;
-import org.jgrapht.alg.cycle.JohnsonSimpleCycles;
 import org.jgrapht.alg.flow.PushRelabelMFImpl;
+import org.jgrapht.alg.flow.mincost.CapacityScalingMinimumCostFlow;
+import org.jgrapht.alg.flow.mincost.MinimumCostFlowProblem;
+import org.jgrapht.alg.interfaces.MinimumCostFlowAlgorithm;
+import org.jgrapht.alg.interfaces.MinimumCostFlowAlgorithm.MinimumCostFlow;
 import org.jgrapht.alg.util.Pair;
+import org.jgrapht.graph.AsWeightedGraph;
 import org.jgrapht.graph.DefaultEdge;
-import org.jgrapht.graph.builder.GraphTypeBuilder;
+import org.jgrapht.graph.SimpleDirectedGraph;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -55,7 +62,7 @@ public class Problem {
   private final Logger LOGGER = LoggerFactory.getLogger(Problem.class);
   private final Input input;
   private final IdSupplier idSupplier;
-  private final Graph<Vertex, DefaultEdge> graph;
+  private final SimpleDirectedGraph<Vertex, DefaultEdge> graph;
   private final SuperSink superSink;
   private final DemandVertex[] demandVertices;
   private final Map<Pair<Integer, Integer>, DecisionVertex> decisionVertices;
@@ -64,21 +71,12 @@ public class Problem {
   public Problem(final Input input) {
     this.input = input;
     this.idSupplier = new IdSupplier();
-    this.graph = buildEmptyGraph();
+    this.graph = new SimpleDirectedGraph<>(DefaultEdge.class);
     this.superSink = new SuperSink(idSupplier.get());
     this.graph.addVertex(this.superSink);
     this.demandVertices = new DemandVertex[input.getNumProducedItems()];
     this.decisionVertices = new HashMap<>();
     this.timeSlotVertices = new TimeSlotVertex[input.getNumTimeSlots()];
-  }
-
-  public static Graph<Vertex, DefaultEdge> buildEmptyGraph() {
-    return GraphTypeBuilder.<Vertex, DefaultEdge>directed()
-        .allowingMultipleEdges(false)
-        .allowingSelfLoops(false)
-        .edgeClass(DefaultEdge.class)
-        .weighted(true)
-        .buildGraph();
   }
 
   public void build() {
@@ -112,7 +110,7 @@ public class Problem {
   }
 
   public Graph<Vertex, DefaultEdge> getResidualGraph(final Schedule schedule) {
-    final Graph<Vertex, DefaultEdge> resGraph = buildEmptyGraph();
+    final Graph<Vertex, DefaultEdge> resGraph = new SimpleDirectedGraph<>(DefaultEdge.class);
     graph.vertexSet().forEach(resGraph::addVertex); // add graph vertices to residual graph
     for (final var edge : graph.edgeSet()) { // add edges with positive residual capacity
       final Vertex source = graph.getEdgeSource(edge);
@@ -126,8 +124,46 @@ public class Problem {
     return resGraph;
   }
 
-  /** Computes a schedule based on the maximum flow of the graph. */
-  public Schedule computeInitialSchedule() {
+  /** Computes a schedule with minimal inventory cost. */
+  public Schedule computeOptimalInventoryCostSchedule() {
+    final Function<DefaultEdge, Double> edgeWeights =
+        edge -> {
+          final boolean sourceIsDemandVertex =
+              graph.getEdgeSource(edge).getVertexType() == Type.DEMAND_VERTEX;
+          final boolean targetIsDecisionVertex =
+              graph.getEdgeTarget(edge).getVertexType() == Type.DECISION_VERTEX;
+          if (sourceIsDemandVertex && targetIsDecisionVertex) {
+            final DemandVertex source = (DemandVertex) graph.getEdgeSource(edge);
+            final DecisionVertex target = (DecisionVertex) graph.getEdgeTarget(edge);
+            return (double) input.getInventoryCost()
+                * (source.getTimeSlot() - target.getTimeSlot());
+          }
+          return 1.;
+        };
+    final var weightedGraph = new AsWeightedGraph<>(graph, edgeWeights, false, false);
+    final Map<Vertex, Integer> supplies = new HashMap<>();
+    for (final DemandVertex demandVertex : demandVertices) {
+      supplies.put(demandVertex, 1);
+    }
+    supplies.put(superSink, -demandVertices.length);
+    final Function<DefaultEdge, Integer> upperArcCapacities = e -> 1;
+    final MinimumCostFlowProblem<Vertex, DefaultEdge> minCostProb =
+        new MinimumCostFlowProblem.MinimumCostFlowProblemImpl<>(
+            weightedGraph, vertex -> supplies.getOrDefault(vertex, 0), upperArcCapacities);
+    final MinimumCostFlowAlgorithm<Vertex, DefaultEdge> minCostAlgo =
+        new CapacityScalingMinimumCostFlow<>();
+    final MinimumCostFlow<DefaultEdge> minCostFlow = minCostAlgo.getMinimumCostFlow(minCostProb);
+    final Collection<Pair<Vertex, Vertex>> usedEdges =
+        minCostFlow.getFlowMap().keySet().stream()
+            .filter(edge -> minCostFlow.getFlow(edge) > 0.)
+            .map(edge -> Pair.of(graph.getEdgeSource(edge), graph.getEdgeTarget(edge)))
+            .collect(Collectors.toUnmodifiableList());
+    assert usedEdges.size() == 3 * demandVertices.length;
+    return new Schedule(input, usedEdges);
+  }
+
+  /** Computes a random schedule based on a maximum flow computation. */
+  public Schedule computeRandomSchedule() {
     final int originalNumberOfEdges = graph.edgeSet().size();
     final int originalNumberOfVertices = graph.vertexSet().size();
     // add super source and connect it to demand vertices
@@ -138,21 +174,26 @@ public class Problem {
     }
     // connect super sink to super source and set corresponding capacity to infinity
     final DefaultEdge sinkSourceEdge = graph.addEdge(superSink, superSource);
-    graph.setEdgeWeight(sinkSourceEdge, Double.POSITIVE_INFINITY);
+    final Map<DefaultEdge, Double> edgeWeights =
+        Collections.singletonMap(sinkSourceEdge, Double.POSITIVE_INFINITY);
+
+    final var weightedGraph =
+        new AsWeightedGraph<>(graph, edge -> edgeWeights.getOrDefault(edge, 1.), false, false);
     // compute max flow from super source to super sink
-    final var maxFlowFinder = new PushRelabelMFImpl<>(graph);
+    final var maxFlowFinder = new PushRelabelMFImpl<>(weightedGraph);
     final var maxFlow = maxFlowFinder.getMaximumFlow(superSource, superSink);
-    if (maxFlow.getValue() != demandVertices.length) {
-      throw new OptimisationException(
-          "Computed max flow value: "
-              + maxFlow.getValue()
-              + "; Expected max flow value: "
-              + demandVertices.length);
-    }
     // remove super source and corresponding edges
     graph.removeVertex(superSource);
     assert graph.edgeSet().size() == originalNumberOfEdges;
     assert graph.vertexSet().size() == originalNumberOfVertices;
+
+    if (maxFlow.getValue() != demandVertices.length) {
+      throw new OptimisationException(
+          "Computed max flow value: "
+              + maxFlow.getValue()
+              + "; Expected: "
+              + demandVertices.length);
+    }
     final Collection<Pair<Vertex, Vertex>> usedEdges =
         graph.edgeSet().stream()
             .filter(edge -> maxFlow.getFlow(edge) > 0.)
@@ -160,12 +201,6 @@ public class Problem {
             .collect(Collectors.toUnmodifiableList());
     assert usedEdges.size() == 3 * demandVertices.length;
     return new Schedule(input, usedEdges);
-  }
-
-  public static <E> List<Cycle> computeCycles(final Graph<Vertex, E> graph) {
-    final var cycleFinder = new JohnsonSimpleCycles<>(graph);
-    final List<List<Vertex>> cycles = cycleFinder.findSimpleCycles();
-    return cycles.stream().map(list -> new Cycle(list)).collect(Collectors.toList());
   }
 
   private void addDemandVertices() {
