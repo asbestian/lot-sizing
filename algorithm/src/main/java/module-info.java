@@ -3,6 +3,7 @@ module algorithm {
   exports de.asbestian.lotsizing.algorithm.scc;
   exports de.asbestian.lotsizing.algorithm.cycle;
 
+  opens de.asbestian.lotsizing.algorithm;
   opens de.asbestian.lotsizing.algorithm.scc;
   opens de.asbestian.lotsizing.algorithm.cycle;
 
@@ -11,4 +12,5 @@ module algorithm {
   requires org.jgrapht.core;
   requires org.slf4j;
   requires it.unimi.dsi.fastutil;
+  requires com.google.common;
 }

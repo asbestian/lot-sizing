@@ -1,6 +1,7 @@
 package de.asbestian.lotsizing.runner;
 
 import de.asbestian.lotsizing.algorithm.Enumeration;
+import de.asbestian.lotsizing.algorithm.NeighbourhoodSearch;
 import de.asbestian.lotsizing.graph.Cycle;
 import de.asbestian.lotsizing.graph.Problem;
 import de.asbestian.lotsizing.graph.Schedule;
@@ -45,6 +46,12 @@ public class Runner implements Callable<Integer> {
       description = "Do full enumeration of the search space.")
   private boolean enumerate = false;
 
+  @Option(
+      names = {"--demandSize"},
+      description =
+          "Number of demand vertices used in neightbourhood search iterations. Default is 8.")
+  private int demandSize = 8;
+
   public static void main(final String... args) {
     final int exitCode = new CommandLine(new Runner()).execute(args);
     System.exit(exitCode);
@@ -68,6 +75,15 @@ public class Runner implements Callable<Integer> {
       LOGGER.info(
           "{} cost: {} (changeover cost = {}, inventory cost = {})",
           enumeration.isSearchSpaceExhausted() ? "Optimal" : "Best",
+          schedule.getCost(),
+          schedule.getChangeOverCost(),
+          schedule.getInventoryCost());
+    } else {
+      final NeighbourhoodSearch nSearch = new NeighbourhoodSearch(input, problem, timeLimit);
+      final Schedule schedule = nSearch.run(demandSize);
+      LOGGER.info("schedule: {}", schedule);
+      LOGGER.info(
+          "Cost: {} (changeover cost = {}, inventory cost = {})",
           schedule.getCost(),
           schedule.getChangeOverCost(),
           schedule.getInventoryCost());
