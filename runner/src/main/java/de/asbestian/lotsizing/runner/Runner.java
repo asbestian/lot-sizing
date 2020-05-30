@@ -88,6 +88,7 @@ public class Runner implements Callable<Integer> {
     computeCycles.start();
     Schedule bestSchedule = initSchedule;
     boolean searchSpaceExhausted = false;
+    long iterations = 0;
     while (Duration.between(start, Instant.now()).toSeconds() < timeLimit) {
       final Cycle cycle = queue.take();
       if (cycle.isEmpty()) {
@@ -100,7 +101,9 @@ public class Runner implements Callable<Integer> {
         LOGGER.info("Improvement: {} with overall cost: {}", schedule, schedule.getCost());
         bestSchedule = schedule;
       }
+      ++iterations;
     }
+    LOGGER.debug("Number of iterations: {}", iterations);
     LOGGER.info("{} schedule: {}", searchSpaceExhausted ? "Optimal" : "Best", bestSchedule);
     LOGGER.info(
         "{} cost: {} (changeover cost = {}, inventory cost = {})",
@@ -112,14 +115,19 @@ public class Runner implements Callable<Integer> {
     return 0;
   }
 
-  private void visualiseGraph(
-      final Problem problem, final Graph<Vertex, DefaultEdge> graph, final String filename) {
+  private Visualisation visualiseVertices(final Problem problem) {
     final Visualisation visualisation = new Visualisation();
     visualisation.addVertices(
         problem.getDemandVertices(),
         problem.getDecisionVertices(),
         problem.getTimeSlotVertices(),
         problem.getSuperSink());
+    return visualisation;
+  }
+
+  private void visualiseGraph(
+      final Problem problem, final Graph<Vertex, DefaultEdge> graph, final String filename) {
+    final Visualisation visualisation = visualiseVertices(problem);
     final List<Pair<Vertex, Vertex>> edges =
         graph.edgeSet().stream()
             .map(edge -> Pair.of(graph.getEdgeSource(edge), graph.getEdgeTarget(edge)))
@@ -128,14 +136,16 @@ public class Runner implements Callable<Integer> {
     visualisation.saveToJPG(filename);
   }
 
+  private void visualiseCycle(final Problem problem, final Cycle cycle, final String filename) {
+    final Visualisation visualisation = visualiseVertices(problem);
+    visualisation.addEdges(cycle.getOriginalGraphEdges());
+    visualisation.addEdges(cycle.getReverseGraphEdges());
+    visualisation.saveToJPG(filename);
+  }
+
   private void visualiseSchedule(
       final Problem problem, final Schedule schedule, final String filename) {
-    final Visualisation visualisation = new Visualisation();
-    visualisation.addVertices(
-        problem.getDemandVertices(),
-        problem.getDecisionVertices(),
-        problem.getTimeSlotVertices(),
-        problem.getSuperSink());
+    final Visualisation visualisation = visualiseVertices(problem);
     visualisation.addEdges(schedule.getEdges());
     visualisation.saveToJPG(filename);
   }
