@@ -11,10 +11,13 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 import org.jgrapht.alg.util.Pair;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /** @author Sebastian Schenker */
 public class Schedule {
 
+  private static final Logger LOGGER = LoggerFactory.getLogger(Schedule.class);
   private final Collection<Pair<Vertex, Vertex>>
       edges; // the original graph edges used in this schedule
   private final int[] schedule;

@@ -34,7 +34,7 @@ import picocli.CommandLine.Parameters;
     description = "Lot sizing optimisation via graph algorithms.")
 public class Runner implements Callable<Integer> {
 
-  private final Logger LOGGER = LoggerFactory.getLogger(Runner.class);
+  private static final Logger LOGGER = LoggerFactory.getLogger(Runner.class);
 
   @Parameters(paramLabel = "file", description = "The file containing the problem instance.")
   private String file;

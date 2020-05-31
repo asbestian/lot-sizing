@@ -11,10 +11,14 @@ import java.util.Map;
 import java.util.Set;
 import org.jgrapht.Graph;
 import org.jgrapht.graph.DefaultEdge;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /** Computes strongly connected components based on Tarjan's algorithm. */
 public class Tarjan implements StronglyConnectedComponentFinder {
 
+  private static final Logger LOGGER =
+      LoggerFactory.getLogger(StronglyConnectedComponentFinder.class);
   private final Graph<Vertex, DefaultEdge> graph;
   private final Map<Vertex, Integer> smallestReachableDfsIndex;
   private final Map<Vertex, Integer> dfsIndex;
