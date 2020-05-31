@@ -1,15 +1,12 @@
 package de.asbestian.lotsizing.input;
 
-import java.io.IOException;
-import java.io.Reader;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.stream.Collectors;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * This class handles the file input. An example input looks like:
@@ -28,7 +25,7 @@ import java.util.stream.Collectors;
  */
 public class Input {
 
-  private final Logger LOGGER = LoggerFactory.getLogger(Input.class);
+  private static final Logger LOGGER = LoggerFactory.getLogger(Input.class);
 
   private int numTimeSlots;
   private int numTypes;

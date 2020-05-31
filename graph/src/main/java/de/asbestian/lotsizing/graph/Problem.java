@@ -59,7 +59,7 @@ public class Problem {
     }
   }
 
-  private final Logger LOGGER = LoggerFactory.getLogger(Problem.class);
+  private static final Logger LOGGER = LoggerFactory.getLogger(Problem.class);
   private final Input input;
   private final IdSupplier idSupplier;
   private final SimpleDirectedGraph<Vertex, DefaultEdge> graph;

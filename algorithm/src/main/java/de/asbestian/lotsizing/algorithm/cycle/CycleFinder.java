@@ -28,7 +28,7 @@ import org.slf4j.LoggerFactory;
  * @author Sebastian Schenker
  */
 public class CycleFinder {
-  private final Logger LOGGER = LoggerFactory.getLogger(CycleFinder.class);
+  private static final Logger LOGGER = LoggerFactory.getLogger(CycleFinder.class);
 
   private final Graph<Vertex, DefaultEdge> graph;
   private final Set<Vertex> blocked;

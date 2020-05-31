@@ -24,7 +24,7 @@ import org.slf4j.LoggerFactory;
 /** @author Sebastian Schenker */
 public class Visualisation {
 
-  private final Logger LOGGER = LoggerFactory.getLogger(Visualisation.class);
+  private static final Logger LOGGER = LoggerFactory.getLogger(Visualisation.class);
   private static final int FRAME_WIDTH = 1600;
   private static final int FRAME_HEIGHT = 900;
   private static final int BORDER_OFFSET = 30;
