@@ -12,6 +12,7 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.List;
 import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 import org.jgrapht.Graph;
 import org.jgrapht.alg.util.Pair;
@@ -80,13 +81,19 @@ public class Runner implements Callable<Integer> {
           schedule.getInventoryCost());
     } else {
       final NeighbourhoodSearch nSearch = new NeighbourhoodSearch(input, problem, timeLimit);
-      final Schedule schedule = nSearch.run(demandSize);
-      LOGGER.info("schedule: {}", schedule);
-      LOGGER.info(
-          "Cost: {} (changeover cost = {}, inventory cost = {})",
-          schedule.getCost(),
-          schedule.getChangeOverCost(),
-          schedule.getInventoryCost());
+      try {
+        final Schedule schedule = nSearch.run(demandSize);
+        LOGGER.info("Best schedule: {}", schedule);
+        LOGGER.info(
+            "Cost: {} (changeover cost = {}, inventory cost = {})",
+            schedule.getCost(),
+            schedule.getChangeOverCost(),
+            schedule.getInventoryCost());
+      } catch (ExecutionException e) {
+        e.printStackTrace();
+      } catch (InterruptedException e) {
+        Thread.currentThread().interrupt();
+      }
     }
     return 0;
   }

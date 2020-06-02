@@ -15,6 +15,11 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.stream.Collectors;
 import org.jgrapht.Graph;
 import org.jgrapht.graph.AsSubgraph;
@@ -29,14 +34,16 @@ public class NeighbourhoodSearch {
   private final Input input;
   private final Problem problem;
   private final double timeLimit;
+  private final ExecutorService execServive;
 
   public NeighbourhoodSearch(final Input input, final Problem problem, final double timeLimit) {
     this.input = input;
     this.problem = problem;
     this.timeLimit = timeLimit;
+    this.execServive = Executors.newFixedThreadPool(4); // newCachedThreadPool();
   }
 
-  public Schedule run(final int demandSize) {
+  public Schedule run(final int demandSize) throws ExecutionException, InterruptedException {
     final Instant start = Instant.now();
     Schedule currentBestSchedule = problem.computeOptimalInventoryCostSchedule();
     LOGGER.info("Initial schedule: {}", currentBestSchedule);
@@ -49,27 +56,41 @@ public class NeighbourhoodSearch {
         problem.getDemandVertices().stream()
             .map(v -> (DemandVertex) v)
             .collect(Collectors.toList());
+    List<DemandVertex> dVertices = new ArrayList<>(demandVertices);
     long iterations = 0;
+    boolean improvement = false;
     while (Duration.between(start, Instant.now()).toSeconds() <= timeLimit) {
       final Graph<Vertex, DefaultEdge> resGraph = problem.getResidualGraph(currentBestSchedule);
-      final List<Schedule> schedules = new ArrayList<>();
-      for (final List<DemandVertex> subSet : Iterables.partition(demandVertices, demandSize)) {
-        final Schedule schedule = computeOptimalSchedule(subSet, resGraph, currentBestSchedule);
-        schedules.add(schedule);
+      final List<Callable<Schedule>> callables = new ArrayList<>();
+      Iterable<List<DemandVertex>> listIterable =
+          improvement
+              ? Iterables.partition(demandVertices, demandSize)
+              : Iterables.partition(dVertices, demandSize);
+      final Schedule finalCurrentBestSchedule = currentBestSchedule;
+      for (final List<DemandVertex> partition : listIterable) {
+        callables.add(() -> computeOptimalSchedule(partition, resGraph, finalCurrentBestSchedule));
       }
-      currentBestSchedule =
-          schedules.stream().min(Comparator.comparingDouble(Schedule::getCost)).orElseThrow();
+      List<Future<Schedule>> futures = execServive.invokeAll(callables);
+      improvement = false;
+      for (Future<Schedule> future : futures) {
+        Schedule schedule = future.get();
+        if (schedule.getCost() < currentBestSchedule.getCost()) {
+          currentBestSchedule = schedule;
+          improvement = true;
+        }
+      }
       LOGGER.debug("Currently best schedule: {}", currentBestSchedule);
       LOGGER.debug(
           "Cost: {} (changeover cost = {}, inventory cost = {})",
           currentBestSchedule.getCost(),
           currentBestSchedule.getChangeOverCost(),
           currentBestSchedule.getInventoryCost());
-      Collections.shuffle(demandVertices);
+      Collections.shuffle(dVertices);
       ++iterations;
     }
     LOGGER.debug("Number of iterations: {}", iterations);
     LOGGER.debug("Time spent: {} seconds.", Duration.between(start, Instant.now()).toSeconds());
+    execServive.shutdown();
     return currentBestSchedule;
   }
 
