@@ -2,6 +2,7 @@ package de.asbestian.lotsizing.input;
 
 import java.io.BufferedReader;
 import java.io.FileReader;
+import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.stream.Collectors;
@@ -40,28 +41,30 @@ public class Input {
   }
 
   public void read(final String file) {
+    final ArrayDeque<String> input = new ArrayDeque<>();
     try (final BufferedReader bf = new BufferedReader(new FileReader(file))) {
-      numTimeSlots = readSingleValueLine(bf.readLine());
-      LOGGER.info("Number of time slots: {}", numTimeSlots);
-      numTypes = readSingleValueLine(bf.readLine());
-      LOGGER.info("Number of types: {}", numTypes);
-      for (int type = 0; type < numTypes; ++type) {
-        final ArrayList<Integer> type_demand = readMultipleValueLine(bf.readLine());
-        assert type_demand.size() == numTimeSlots;
-        demand.add(type_demand);
-      }
-      inventoryCost = readSingleValueLine(bf.readLine());
-      LOGGER.info("Inventory cost: {}", inventoryCost);
-      for (int type = 0; type < numTypes; ++type) {
-        final ArrayList<Integer> cost = readMultipleValueLine(bf.readLine());
-        assert cost.size() == numTypes;
-        changeover_cost.add(cost);
-      }
-      overallDemandPerType = computeNumProducedTypeItems();
-      LOGGER.info("Overall demand per type: {}", overallDemandPerType);
+      bf.lines().filter(line -> !line.isBlank()).forEachOrdered(input::addLast);
     } catch (final Exception e) {
       e.printStackTrace();
     }
+    numTimeSlots = readSingleValueLine(input.removeFirst());
+    LOGGER.info("Number of time slots: {}", numTimeSlots);
+    numTypes = readSingleValueLine(input.removeFirst());
+    LOGGER.info("Number of types: {}", numTypes);
+    for (int type = 0; type < numTypes; ++type) {
+      final ArrayList<Integer> type_demand = readMultipleValueLine(input.removeFirst());
+      assert type_demand.size() == numTimeSlots;
+      demand.add(type_demand);
+    }
+    inventoryCost = readSingleValueLine(input.removeFirst());
+    LOGGER.info("Inventory cost: {}", inventoryCost);
+    for (int type = 0; type < numTypes; ++type) {
+      final ArrayList<Integer> cost = readMultipleValueLine(input.removeFirst());
+      assert cost.size() == numTypes;
+      changeover_cost.add(cost);
+    }
+    overallDemandPerType = computeNumProducedTypeItems();
+    LOGGER.info("Overall demand per type: {}", overallDemandPerType);
   }
 
   private ArrayList<Integer> computeNumProducedTypeItems() {
