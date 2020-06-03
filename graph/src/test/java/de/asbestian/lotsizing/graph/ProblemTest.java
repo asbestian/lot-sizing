@@ -2,7 +2,10 @@ package de.asbestian.lotsizing.graph;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
+import de.asbestian.lotsizing.graph.vertex.DecisionVertex;
+import de.asbestian.lotsizing.graph.vertex.DemandVertex;
 import de.asbestian.lotsizing.graph.vertex.SuperSink;
+import de.asbestian.lotsizing.graph.vertex.TimeSlotVertex;
 import de.asbestian.lotsizing.graph.vertex.Vertex;
 import de.asbestian.lotsizing.input.Input;
 import java.nio.file.Files;
@@ -114,9 +117,9 @@ class ProblemTest {
     input.read(path);
     final Problem problem = new Problem(input);
     problem.build();
-    final List<Vertex> demandVertices = problem.getDemandVertices();
-    final List<Vertex> decisionVertices = problem.getDecisionVertices();
-    final List<Vertex> timeSlotVertices = problem.getTimeSlotVertices();
+    final List<DemandVertex> demandVertices = problem.getDemandVertices();
+    final List<DecisionVertex> decisionVertices = problem.getDecisionVertices();
+    final List<TimeSlotVertex> timeSlotVertices = problem.getTimeSlotVertices();
     final SuperSink superSink = problem.getSuperSink();
 
     final Schedule schedule = problem.computeRandomSchedule();

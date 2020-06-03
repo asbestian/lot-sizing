@@ -2,7 +2,10 @@ package de.asbestian.lotsizing.graph;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
+import de.asbestian.lotsizing.graph.vertex.DecisionVertex;
+import de.asbestian.lotsizing.graph.vertex.DemandVertex;
 import de.asbestian.lotsizing.graph.vertex.SuperSink;
+import de.asbestian.lotsizing.graph.vertex.TimeSlotVertex;
 import de.asbestian.lotsizing.graph.vertex.Vertex;
 import de.asbestian.lotsizing.input.Input;
 import java.nio.file.Files;
@@ -12,15 +15,11 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
-import org.jgrapht.Graph;
 import org.jgrapht.alg.util.Pair;
-import org.jgrapht.graph.DefaultEdge;
 import org.junit.jupiter.api.Test;
 
 /** @author Sebastian Schenker */
 class ScheduleTest {
-
-  private Schedule schedule;
 
   @Test
   void constructor() {
@@ -31,9 +30,9 @@ class ScheduleTest {
     input.read(path);
     final Problem problem = new Problem(input);
     problem.build();
-    final List<Vertex> demandVertices = problem.getDemandVertices();
-    final List<Vertex> decisionVertices = problem.getDecisionVertices();
-    final List<Vertex> timeSlotVertices = problem.getTimeSlotVertices();
+    final List<DemandVertex> demandVertices = problem.getDemandVertices();
+    final List<DecisionVertex> decisionVertices = problem.getDecisionVertices();
+    final List<TimeSlotVertex> timeSlotVertices = problem.getTimeSlotVertices();
     final SuperSink superSink = problem.getSuperSink();
     final Collection<Pair<Vertex, Vertex>> usedEdges =
         Arrays.asList(
@@ -70,7 +69,6 @@ class ScheduleTest {
     problem.build();
     final Schedule initSchedule = problem.computeRandomSchedule();
     assertEquals("[1, 0, 1, -1]", initSchedule.toString());
-    final Graph<Vertex, DefaultEdge> resGraph = problem.getResidualGraph(initSchedule);
 
     final HashMap<Integer, Vertex> vertices = new HashMap<>();
     problem.getDemandVertices().forEach(v -> vertices.put(v.getId(), v));
@@ -110,9 +108,9 @@ class ScheduleTest {
     input.read(path);
     final Problem problem = new Problem(input);
     problem.build();
-    final List<Vertex> demandVertices = problem.getDemandVertices();
-    final List<Vertex> decisionVertices = problem.getDecisionVertices();
-    final List<Vertex> timeSlotVertices = problem.getTimeSlotVertices();
+    final List<DemandVertex> demandVertices = problem.getDemandVertices();
+    final List<DecisionVertex> decisionVertices = problem.getDecisionVertices();
+    final List<TimeSlotVertex> timeSlotVertices = problem.getTimeSlotVertices();
     final SuperSink superSink = problem.getSuperSink();
     final List<Pair<Vertex, Vertex>> usedEdges =
         Arrays.asList(
