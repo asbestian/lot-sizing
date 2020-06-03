@@ -28,15 +28,15 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /** @author Sebastian Schenker */
-public class NeighbourhoodSearch {
+public class LocalSearch {
 
-  private static final Logger LOGGER = LoggerFactory.getLogger(NeighbourhoodSearch.class);
+  private static final Logger LOGGER = LoggerFactory.getLogger(LocalSearch.class);
   private final Input input;
   private final Problem problem;
   private final double timeLimit;
   private final ExecutorService execServive;
 
-  public NeighbourhoodSearch(final Input input, final Problem problem, final double timeLimit) {
+  public LocalSearch(final Input input, final Problem problem, final double timeLimit) {
     this.input = input;
     this.problem = problem;
     this.timeLimit = timeLimit;
