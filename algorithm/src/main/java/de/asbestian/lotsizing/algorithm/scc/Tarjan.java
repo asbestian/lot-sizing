@@ -51,11 +51,6 @@ public class Tarjan implements StronglyConnectedComponentFinder {
         .filter(v -> v.getId() >= idThreshold)
         .filter(v -> !dfsIndex.containsKey(v))
         .forEach(v -> findSCC(v, idThreshold));
-    if (LOGGER.isTraceEnabled()) {
-      LOGGER.trace(
-          "Number of strongly connected components: {}",
-          stronglyConnectedComponents.values().size());
-    }
     return Collections.unmodifiableCollection(stronglyConnectedComponents.values());
   }
 

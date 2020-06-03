@@ -33,9 +33,6 @@ public class Runner implements Callable<Integer> {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(Runner.class);
 
-  @Parameters(paramLabel = "file", description = "The file containing the problem instance.")
-  private String file;
-
   @Option(
       names = {"--numThreads"},
       description =
@@ -57,11 +54,14 @@ public class Runner implements Callable<Integer> {
   private boolean enumerate;
 
   @Option(
-      names = {"-n, --neighbourhood"},
+      names = {"-n", "--neighbourhood"},
       description =
           "Size of demand vertex neighbourhood used in local search procedure. Default value is ${DEFAULT-VALUE}.",
       defaultValue = "5")
-  private int neighbourhoodSize;
+  private int neighbourhood;
+
+  @Parameters(paramLabel = "file", description = "The file containing the problem instance.")
+  private String file;
 
   public static void main(final String... args) {
     final int exitCode = new CommandLine(new Runner()).execute(args);
@@ -90,8 +90,7 @@ public class Runner implements Callable<Integer> {
           schedule.getChangeOverCost(),
           schedule.getInventoryCost());
     } else {
-      final LocalSearch localSearch =
-          new LocalSearch(input, problem, numThreads, neighbourhoodSize);
+      final LocalSearch localSearch = new LocalSearch(input, problem, numThreads, neighbourhood);
       final Schedule schedule = localSearch.search(timeLimit);
       LOGGER.info("Best schedule: {}", schedule);
       LOGGER.info(

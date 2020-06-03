@@ -75,6 +75,9 @@ public class CycleFinder {
       }
       findCyclesInSCC(leastVertex.getId(), leastVertex, leastSCC, cycles);
     } while (iter.hasNext());
+    if (LOGGER.isTraceEnabled()) {
+      LOGGER.trace("Number of cycles: {}", cycles.size());
+    }
     return cycles;
   }
 
