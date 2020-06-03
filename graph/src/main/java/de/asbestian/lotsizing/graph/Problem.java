@@ -89,19 +89,19 @@ public class Problem {
   }
 
   /** Returns unmodifiable list of demand vertices in ascending Id order */
-  public List<Vertex> getDemandVertices() {
+  public List<DemandVertex> getDemandVertices() {
     return List.of(demandVertices);
   }
 
   /** Returns unmodifiable list of decision vertices in ascending Id order */
-  public List<Vertex> getDecisionVertices() {
+  public List<DecisionVertex> getDecisionVertices() {
     return decisionVertices.values().stream()
         .sorted(Comparator.comparingInt(Vertex::getId))
         .collect(Collectors.toUnmodifiableList());
   }
 
   /** Returns unmodifiable list of time slot vertices in ascending Id order */
-  public List<Vertex> getTimeSlotVertices() {
+  public List<TimeSlotVertex> getTimeSlotVertices() {
     return List.of(timeSlotVertices);
   }
 

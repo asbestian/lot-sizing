@@ -3,7 +3,10 @@ package de.asbestian.lotsizing.visualisation;
 import com.mxgraph.model.mxIGraphModel;
 import com.mxgraph.util.mxCellRenderer;
 import com.mxgraph.view.mxGraph;
+import de.asbestian.lotsizing.graph.vertex.DecisionVertex;
+import de.asbestian.lotsizing.graph.vertex.DemandVertex;
 import de.asbestian.lotsizing.graph.vertex.SuperSink;
+import de.asbestian.lotsizing.graph.vertex.TimeSlotVertex;
 import de.asbestian.lotsizing.graph.vertex.Vertex;
 import java.awt.Color;
 import java.awt.image.BufferedImage;
@@ -68,9 +71,9 @@ public class Visualisation {
   }
 
   public void addVertices(
-      final Collection<Vertex> demandVertices,
-      final Collection<Vertex> decisionVertices,
-      final Collection<Vertex> timeSlotVertices,
+      final Collection<DemandVertex> demandVertices,
+      final Collection<DecisionVertex> decisionVertices,
+      final Collection<TimeSlotVertex> timeSlotVertices,
       final SuperSink superSink) {
 
     graph.getModel().beginUpdate();
@@ -114,7 +117,7 @@ public class Visualisation {
   }
 
   private void addToGraph(
-      final Collection<Vertex> vertices,
+      final Collection<? extends Vertex> vertices,
       final double horizontalOffset,
       final double verticalOffset) {
     double offset = horizontalOffset;
