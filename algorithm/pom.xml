@@ -18,6 +18,12 @@
       <artifactId>graph</artifactId>
       <version>1.0</version>
     </dependency>
+
+    <dependency>
+      <groupId>de.asbestian.lotsizing</groupId>
+      <artifactId>input</artifactId>
+      <version>1.0</version>
+    </dependency>
   </dependencies>
 
 </project>

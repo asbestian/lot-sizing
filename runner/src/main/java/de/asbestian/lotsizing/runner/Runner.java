@@ -1,6 +1,6 @@
 package de.asbestian.lotsizing.runner;
 
-import de.asbestian.lotsizing.algorithm.cycle.CycleFinder;
+import de.asbestian.lotsizing.algorithm.Enumeration;
 import de.asbestian.lotsizing.graph.Cycle;
 import de.asbestian.lotsizing.graph.Problem;
 import de.asbestian.lotsizing.graph.Schedule;
@@ -9,11 +9,7 @@ import de.asbestian.lotsizing.input.Input;
 import de.asbestian.lotsizing.visualisation.Visualisation;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.time.Duration;
-import java.time.Instant;
 import java.util.List;
-import java.util.concurrent.ArrayBlockingQueue;
-import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Callable;
 import java.util.stream.Collectors;
 import org.jgrapht.Graph;
@@ -45,9 +41,9 @@ public class Runner implements Callable<Integer> {
   private double timeLimit = Double.POSITIVE_INFINITY;
 
   @Option(
-      names = {"-b", "--blockingQueueCapacity"},
-      description = "Number of elements available in blocking queue. Default is 10.")
-  private int blockingQueueCapacity = 10;
+      names = {"-e", "--enumerate"},
+      description = "Do full enumeration of the search space.")
+  private boolean enumerate = false;
 
   public static void main(final String... args) {
     final int exitCode = new CommandLine(new Runner()).execute(args);
@@ -55,63 +51,27 @@ public class Runner implements Callable<Integer> {
   }
 
   @Override
-  public Integer call() throws InterruptedException {
+  public Integer call() {
     if (!Files.exists(Paths.get(file))) {
       System.err.println("Given file cannot be found.");
       return 1;
     }
-    final Instant start = Instant.now();
     final Input input = new Input();
     input.read(file);
     final Problem problem = new Problem(input);
     problem.build();
-    final Schedule initSchedule = problem.computeOptimalInventoryCostSchedule();
-    LOGGER.info("Initial schedule: {}", initSchedule);
-    LOGGER.info(
-        "Cost: {} (changeover cost = {}, inventory cost = {})",
-        initSchedule.getCost(),
-        initSchedule.getChangeOverCost(),
-        initSchedule.getInventoryCost());
-
-    final Graph<Vertex, DefaultEdge> resGraph = problem.getResidualGraph(initSchedule);
-    final CycleFinder cycleFinder = new CycleFinder(resGraph);
-    final BlockingQueue<Cycle> queue = new ArrayBlockingQueue<>(blockingQueueCapacity);
-    final Thread computeCycles =
-        new Thread(
-            () -> {
-              try {
-                cycleFinder.computeCycles(queue);
-              } catch (final InterruptedException e) {
-                e.printStackTrace();
-              }
-            });
-    computeCycles.start();
-    Schedule bestSchedule = initSchedule;
-    boolean searchSpaceExhausted = false;
-    long iterations = 0;
-    while (Duration.between(start, Instant.now()).toSeconds() < timeLimit) {
-      final Cycle cycle = queue.take();
-      if (cycle.isEmpty()) {
-        searchSpaceExhausted = true;
-        LOGGER.debug("Search space exhausted.");
-        break;
-      }
-      final Schedule schedule = initSchedule.compute(cycle, input);
-      if (schedule.getCost() < bestSchedule.getCost()) {
-        LOGGER.info("Improvement: {} with overall cost: {}", schedule, schedule.getCost());
-        bestSchedule = schedule;
-      }
-      ++iterations;
+    if (enumerate) {
+      final Enumeration enumeration = new Enumeration(input, problem);
+      final Schedule schedule = enumeration.search(timeLimit);
+      LOGGER.info(
+          "{} schedule: {}", enumeration.isSearchSpaceExhausted() ? "Optimal" : "Best", schedule);
+      LOGGER.info(
+          "{} cost: {} (changeover cost = {}, inventory cost = {})",
+          enumeration.isSearchSpaceExhausted() ? "Optimal" : "Best",
+          schedule.getCost(),
+          schedule.getChangeOverCost(),
+          schedule.getInventoryCost());
     }
-    LOGGER.debug("Number of iterations: {}", iterations);
-    LOGGER.info("{} schedule: {}", searchSpaceExhausted ? "Optimal" : "Best", bestSchedule);
-    LOGGER.info(
-        "{} cost: {} (changeover cost = {}, inventory cost = {})",
-        searchSpaceExhausted ? "Optimal" : "Best",
-        bestSchedule.getCost(),
-        bestSchedule.getChangeOverCost(),
-        bestSchedule.getInventoryCost());
-    LOGGER.info("Time spent: {} seconds.", Duration.between(start, Instant.now()).toSeconds());
     return 0;
   }
 
