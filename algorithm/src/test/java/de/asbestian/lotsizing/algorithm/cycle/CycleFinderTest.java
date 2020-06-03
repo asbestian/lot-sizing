@@ -15,7 +15,7 @@ import org.junit.jupiter.api.Test;
 class CycleFinderTest {
 
   @Test
-  void cyclicGraph_allCyclesFound() throws InterruptedException {
+  void cyclicGraph_allCyclesFound() {
     final Graph<Vertex, DefaultEdge> graph = new SimpleDirectedGraph<>(DefaultEdge.class);
     final Vertex one = new Vertex(1);
     final Vertex two = new Vertex(2);

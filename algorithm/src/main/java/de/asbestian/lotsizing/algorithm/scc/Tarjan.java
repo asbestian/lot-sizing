@@ -24,7 +24,7 @@ public class Tarjan implements StronglyConnectedComponentFinder {
   private final Map<Vertex, Integer> dfsIndex;
   private final Map<Vertex, Boolean> isVertexOnStack;
   private final Deque<Vertex> stack;
-  private final Map<Vertex, Set<Vertex>> stronglyConnectedComponent;
+  private final Map<Vertex, Set<Vertex>> stronglyConnectedComponents;
 
   /** Constructor. */
   public Tarjan(final Graph<Vertex, DefaultEdge> graph) {
@@ -33,7 +33,7 @@ public class Tarjan implements StronglyConnectedComponentFinder {
     dfsIndex = new HashMap<>();
     isVertexOnStack = new HashMap<>();
     stack = new ArrayDeque<>();
-    stronglyConnectedComponent = new HashMap<>();
+    stronglyConnectedComponents = new HashMap<>();
   }
 
   @Override
@@ -43,7 +43,12 @@ public class Tarjan implements StronglyConnectedComponentFinder {
         .filter(v -> v.getId() >= threshold)
         .filter(v -> !dfsIndex.containsKey(v))
         .forEach(v -> findSCC(v, threshold));
-    return Collections.unmodifiableCollection(stronglyConnectedComponent.values());
+    if (LOGGER.isTraceEnabled()) {
+      LOGGER.trace(
+          "Number of strongly connected components: {}",
+          stronglyConnectedComponents.values().size());
+    }
+    return Collections.unmodifiableCollection(stronglyConnectedComponents.values());
   }
 
   private void clearState() {
@@ -51,7 +56,7 @@ public class Tarjan implements StronglyConnectedComponentFinder {
     dfsIndex.clear();
     isVertexOnStack.clear();
     stack.clear();
-    stronglyConnectedComponent.clear();
+    stronglyConnectedComponents.clear();
   }
 
   private void findSCC(final Vertex u, final int threshold) {
@@ -88,7 +93,7 @@ public class Tarjan implements StronglyConnectedComponentFinder {
         isVertexOnStack.put(vertex, false);
         scc.add(vertex);
       } while (!vertex.equals(u));
-      stronglyConnectedComponent.put(u, scc);
+      stronglyConnectedComponents.put(u, scc);
     }
   }
 }

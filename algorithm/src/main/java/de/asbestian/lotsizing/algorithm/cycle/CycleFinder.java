@@ -44,7 +44,7 @@ public class CycleFinder {
     this.tarjan = new Tarjan(graph);
   }
 
-  public void computeCycles(final BlockingQueue<Cycle> queue) throws InterruptedException {
+  public void computeCycles(final BlockingQueue<Cycle> queue) {
     clearState();
     int threshold = 0;
     while (threshold < graph.vertexSet().size()) {
@@ -62,10 +62,21 @@ public class CycleFinder {
         getBlockedVertices(vertex);
       }
       threshold = leastVertex.getId();
-      findCyclesInSCC(threshold, leastVertex, leastSCC, queue);
+      try {
+        findCyclesInSCC(threshold, leastVertex, leastSCC, queue);
+      } catch (InterruptedException e) {
+        LOGGER.info(e.getMessage());
+        Thread.currentThread().interrupt();
+        return;
+      }
       ++threshold;
     }
-    queue.put(new Cycle(Collections.emptyList()));
+    try {
+      queue.put(new Cycle(Collections.emptyList()));
+    } catch (InterruptedException e) {
+      LOGGER.info(e.getMessage());
+      Thread.currentThread().interrupt();
+    }
   }
 
   private void clearState() {
