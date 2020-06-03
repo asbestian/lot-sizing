@@ -28,70 +28,82 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /** @author Sebastian Schenker */
-public class LocalSearch {
+public class LocalSearch implements Solver {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(LocalSearch.class);
   private final Input input;
   private final Problem problem;
-  private final double timeLimit;
-  private final ExecutorService execServive;
+  private final ExecutorService executorService;
+  private final int neighbourhoodSize;
 
-  public LocalSearch(final Input input, final Problem problem, final double timeLimit) {
+  public LocalSearch(
+      final Input input, final Problem problem, final int numThreads, final int neighbourhoodSize) {
     this.input = input;
     this.problem = problem;
-    this.timeLimit = timeLimit;
-    this.execServive = Executors.newFixedThreadPool(4); // newCachedThreadPool();
+    this.executorService = Executors.newFixedThreadPool(numThreads);
+    this.neighbourhoodSize = neighbourhoodSize;
   }
 
-  public Schedule run(final int demandSize) throws ExecutionException, InterruptedException {
+  @Override
+  public Schedule search(double timeLimit) {
     final Instant start = Instant.now();
-    Schedule currentBestSchedule = problem.computeOptimalInventoryCostSchedule();
-    LOGGER.info("Initial schedule: {}", currentBestSchedule);
-    LOGGER.info(
-        "Cost: {} (changeover cost = {}, inventory cost = {})",
-        currentBestSchedule.getCost(),
-        currentBestSchedule.getChangeOverCost(),
-        currentBestSchedule.getInventoryCost());
+    Schedule bestSchedule = problem.computeOptimalInventoryCostSchedule();
+    if (LOGGER.isDebugEnabled()) {
+      LOGGER.debug("Initial schedule: {}", bestSchedule);
+      LOGGER.debug(
+          "Cost: {} (changeover cost = {}, inventory cost = {})",
+          bestSchedule.getCost(),
+          bestSchedule.getChangeOverCost(),
+          bestSchedule.getInventoryCost());
+    }
     final List<DemandVertex> demandVertices =
         problem.getDemandVertices().stream()
             .map(v -> (DemandVertex) v)
             .collect(Collectors.toList());
     List<DemandVertex> dVertices = new ArrayList<>(demandVertices);
-    long iterations = 0;
+    long numIterations = 0;
     boolean improvement = false;
     while (Duration.between(start, Instant.now()).toSeconds() <= timeLimit) {
-      final Graph<Vertex, DefaultEdge> resGraph = problem.getResidualGraph(currentBestSchedule);
+      final Graph<Vertex, DefaultEdge> resGraph = problem.getResidualGraph(bestSchedule);
       final List<Callable<Schedule>> callables = new ArrayList<>();
       Iterable<List<DemandVertex>> listIterable =
           improvement
-              ? Iterables.partition(demandVertices, demandSize)
-              : Iterables.partition(dVertices, demandSize);
-      final Schedule finalCurrentBestSchedule = currentBestSchedule;
+              ? Iterables.partition(demandVertices, neighbourhoodSize)
+              : Iterables.partition(dVertices, neighbourhoodSize);
+      final Schedule finalCurrentBestSchedule = bestSchedule;
       for (final List<DemandVertex> partition : listIterable) {
         callables.add(() -> computeOptimalSchedule(partition, resGraph, finalCurrentBestSchedule));
       }
-      List<Future<Schedule>> futures = execServive.invokeAll(callables);
-      improvement = false;
-      for (Future<Schedule> future : futures) {
-        Schedule schedule = future.get();
-        if (schedule.getCost() < currentBestSchedule.getCost()) {
-          currentBestSchedule = schedule;
-          improvement = true;
+      try {
+        List<Future<Schedule>> futures = executorService.invokeAll(callables);
+        improvement = false;
+        for (Future<Schedule> future : futures) {
+          Schedule schedule = future.get();
+          if (schedule.getCost() < bestSchedule.getCost()) {
+            bestSchedule = schedule;
+            improvement = true;
+          }
         }
+      } catch (InterruptedException | ExecutionException e) {
+        LOGGER.info(e.getMessage());
+        Thread.currentThread().interrupt();
+        return bestSchedule;
       }
-      LOGGER.debug("Currently best schedule: {}", currentBestSchedule);
+      LOGGER.debug("Currently best schedule: {}", bestSchedule);
       LOGGER.debug(
           "Cost: {} (changeover cost = {}, inventory cost = {})",
-          currentBestSchedule.getCost(),
-          currentBestSchedule.getChangeOverCost(),
-          currentBestSchedule.getInventoryCost());
+          bestSchedule.getCost(),
+          bestSchedule.getChangeOverCost(),
+          bestSchedule.getInventoryCost());
       Collections.shuffle(dVertices);
-      ++iterations;
+      ++numIterations;
     }
-    LOGGER.debug("Number of iterations: {}", iterations);
-    LOGGER.debug("Time spent: {} seconds.", Duration.between(start, Instant.now()).toSeconds());
-    execServive.shutdown();
-    return currentBestSchedule;
+    executorService.shutdown();
+    if (LOGGER.isDebugEnabled()) {
+      LOGGER.debug("Number of iterations: {}", numIterations);
+      LOGGER.debug("Time spent: {} seconds.", Duration.between(start, Instant.now()).toSeconds());
+    }
+    return bestSchedule;
   }
 
   private Schedule computeOptimalSchedule(

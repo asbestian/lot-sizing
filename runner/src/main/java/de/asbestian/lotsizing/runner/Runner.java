@@ -12,7 +12,6 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.List;
 import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 import org.jgrapht.Graph;
 import org.jgrapht.alg.util.Pair;
@@ -38,20 +37,31 @@ public class Runner implements Callable<Integer> {
   private String file;
 
   @Option(
+      names = {"--numThreads"},
+      description =
+          "Maximal number of threads used in local search procedure. Default value is ${DEFAULT-VALUE}.",
+      defaultValue = "4")
+  private int numThreads;
+
+  @Option(
       names = {"-t", "--timeLimit"},
-      description = "Time limit (in seconds) for computation. Default is no time limit.")
-  private double timeLimit = Double.POSITIVE_INFINITY;
+      description = "Time limit (in seconds) of computation. Default value is ${DEFAULT-VALUE}.",
+      defaultValue = "600")
+  private double timeLimit;
 
   @Option(
       names = {"-e", "--enumerate"},
-      description = "Do full enumeration of the search space.")
-  private boolean enumerate = false;
+      description =
+          "Attempt full enumeration of the search space. (Note that given time limit applies.)",
+      defaultValue = "false")
+  private boolean enumerate;
 
   @Option(
-      names = {"--demandSize"},
+      names = {"-n, --neighbourhood"},
       description =
-          "Number of demand vertices used in neightbourhood search iterations. Default is 8.")
-  private int demandSize = 8;
+          "Size of demand vertex neighbourhood used in local search procedure. Default value is ${DEFAULT-VALUE}.",
+      defaultValue = "5")
+  private int neighbourhoodSize;
 
   public static void main(final String... args) {
     final int exitCode = new CommandLine(new Runner()).execute(args);
@@ -80,20 +90,15 @@ public class Runner implements Callable<Integer> {
           schedule.getChangeOverCost(),
           schedule.getInventoryCost());
     } else {
-      final LocalSearch localSearch = new LocalSearch(input, problem, timeLimit);
-      try {
-        final Schedule schedule = localSearch.run(demandSize);
-        LOGGER.info("Best schedule: {}", schedule);
-        LOGGER.info(
-            "Cost: {} (changeover cost = {}, inventory cost = {})",
-            schedule.getCost(),
-            schedule.getChangeOverCost(),
-            schedule.getInventoryCost());
-      } catch (ExecutionException e) {
-        e.printStackTrace();
-      } catch (InterruptedException e) {
-        Thread.currentThread().interrupt();
-      }
+      final LocalSearch localSearch =
+          new LocalSearch(input, problem, numThreads, neighbourhoodSize);
+      final Schedule schedule = localSearch.search(timeLimit);
+      LOGGER.info("Best schedule: {}", schedule);
+      LOGGER.info(
+          "Cost: {} (changeover cost = {}, inventory cost = {})",
+          schedule.getCost(),
+          schedule.getChangeOverCost(),
+          schedule.getInventoryCost());
     }
     return 0;
   }
