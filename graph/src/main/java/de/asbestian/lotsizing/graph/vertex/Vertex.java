@@ -39,7 +39,7 @@ public class Vertex {
 
   @Override
   public int hashCode() {
-    return Integer.hashCode(id);
+    return id;
   }
 
   @Override

@@ -48,18 +48,9 @@ public class Enumeration implements Solver {
           initSchedule.getInventoryCost());
     }
     final Graph<Vertex, DefaultEdge> resGraph = problem.getResidualGraph(initSchedule);
-    final CycleFinder cycleFinder = new CycleFinder(resGraph);
+    final CycleFinder cycleFinder = new CycleFinder();
     final BlockingQueue<Cycle> queue = new ArrayBlockingQueue<>(QUEUE_CAPACITY);
-    final Thread computeCycles =
-        new Thread(
-            () -> {
-              try {
-                cycleFinder.computeCycles(queue);
-              } catch (final InterruptedException e) {
-                LOGGER.info(e.getMessage());
-                Thread.currentThread().interrupt();
-              }
-            });
+    final Thread computeCycles = new Thread(() -> cycleFinder.computeCycles(resGraph, queue));
     computeCycles.start();
     Schedule bestSchedule = initSchedule;
     int numIterations = 0;

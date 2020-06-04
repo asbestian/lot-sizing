@@ -10,6 +10,7 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -23,28 +24,101 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Finds all simple directed cycles via Johnson's algorithm.
+ * Class for computing all simple directed cycles.
  *
  * @author Sebastian Schenker
  */
 public class CycleFinder {
   private static final Logger LOGGER = LoggerFactory.getLogger(CycleFinder.class);
 
-  private final Graph<Vertex, DefaultEdge> graph;
   private final Set<Vertex> blocked;
   private final Map<Vertex, Set<Vertex>> blockedMap;
   private final ArrayDeque<Vertex> stack;
-  private final Tarjan tarjan;
+  private Graph<Vertex, DefaultEdge> graph;
+  private Tarjan tarjan;
 
-  public CycleFinder(final Graph<Vertex, DefaultEdge> graph) {
-    this.graph = graph;
+  public CycleFinder() {
     this.blocked = new HashSet<>();
     this.blockedMap = new HashMap<>();
     this.stack = new ArrayDeque<>();
-    this.tarjan = new Tarjan(graph);
   }
 
-  public void computeCycles(final BlockingQueue<Cycle> queue) throws InterruptedException {
+  /**
+   * Computes all simple directed cycles via Johnson's algorithm.
+   *
+   * @param ToDo
+   * @return Simple directed cycles of underlying graph
+   */
+  public List<Cycle> computeCycles(final Graph<Vertex, DefaultEdge> graph) {
+    this.graph = graph;
+    this.tarjan = new Tarjan(graph);
+    if (graph.vertexSet().isEmpty()) {
+      return Collections.emptyList();
+    }
+    clearState();
+    List<Cycle> cycles = new ArrayList<>();
+    final Iterator<Vertex> iter = graph.vertexSet().iterator();
+    do {
+      int idThreshold = iter.next().getId();
+      final Collection<Set<Vertex>> stronglyConnectedComponents = tarjan.computeSCCs(idThreshold);
+      if (stronglyConnectedComponents.isEmpty()) {
+        return cycles;
+      }
+      final Pair<Graph<Vertex, DefaultEdge>, Vertex> result =
+          getMinVertexSCC(stronglyConnectedComponents);
+      final Graph<Vertex, DefaultEdge> leastSCC = result.getFirst();
+      final Vertex leastVertex = result.getSecond();
+      for (final DefaultEdge edge : leastSCC.outgoingEdgesOf(leastVertex)) {
+        final Vertex target = leastSCC.getEdgeTarget(edge);
+        blocked.remove(target);
+        getBlockedVertices(target);
+      }
+      findCyclesInSCC(leastVertex.getId(), leastVertex, leastSCC, cycles);
+    } while (iter.hasNext());
+    return cycles;
+  }
+
+  private boolean findCyclesInSCC(
+      final int startIndex,
+      final Vertex vertex,
+      final Graph<Vertex, DefaultEdge> scc,
+      final List<Cycle> cycles) {
+    boolean foundCycle = false;
+    stack.push(vertex);
+    blocked.add(vertex);
+    for (final DefaultEdge edge : scc.outgoingEdgesOf(vertex)) {
+      final Vertex target = scc.getEdgeTarget(edge);
+      if (target.getId() == startIndex) { // cycle found
+        final List<Vertex> vertices = new ArrayList<>(stack.size());
+        stack.descendingIterator().forEachRemaining(vertices::add);
+        foundCycle = true;
+        cycles.add(new Cycle(vertices));
+      } else if (!blocked.contains(target)) {
+        final boolean gotCycle = findCyclesInSCC(startIndex, target, scc, cycles);
+        foundCycle = foundCycle || gotCycle;
+      }
+    }
+    if (foundCycle) {
+      unblock(vertex);
+    } else {
+      scc.outgoingEdgesOf(vertex).stream()
+          .map(scc::getEdgeTarget)
+          .forEach(target -> getBlockedVertices(target).add(vertex));
+    }
+    stack.pop();
+    return foundCycle;
+  }
+
+  /**
+   * Computes all simple directed cycles via Johnson's algorithm. Assumes that the vertex indices of
+   * the underlying graph are numbered from 0,...,|vertices|-1 without any gaps.
+   *
+   * @param queue Data structure carrying found cycles
+   */
+  public void computeCycles(
+      final Graph<Vertex, DefaultEdge> graph, final BlockingQueue<Cycle> queue) {
+    this.graph = graph;
+    this.tarjan = new Tarjan(graph);
     clearState();
     int threshold = 0;
     while (threshold < graph.vertexSet().size()) {
@@ -57,15 +131,26 @@ public class CycleFinder {
       final Graph<Vertex, DefaultEdge> leastSCC = result.getFirst();
       final Vertex leastVertex = result.getSecond();
       for (final DefaultEdge edge : leastSCC.outgoingEdgesOf(leastVertex)) {
-        final Vertex vertex = leastSCC.getEdgeTarget(edge);
-        blocked.remove(vertex);
-        getBlockedVertices(vertex);
+        final Vertex target = leastSCC.getEdgeTarget(edge);
+        blocked.remove(target);
+        getBlockedVertices(target);
       }
       threshold = leastVertex.getId();
-      findCyclesInSCC(threshold, leastVertex, leastSCC, queue);
+      try {
+        findCyclesInSCC(threshold, leastVertex, leastSCC, queue);
+      } catch (InterruptedException e) {
+        LOGGER.info(e.getMessage());
+        Thread.currentThread().interrupt();
+        return;
+      }
       ++threshold;
     }
-    queue.put(new Cycle(Collections.emptyList()));
+    try {
+      queue.put(new Cycle(Collections.emptyList()));
+    } catch (InterruptedException e) {
+      LOGGER.info(e.getMessage());
+      Thread.currentThread().interrupt();
+    }
   }
 
   private void clearState() {
