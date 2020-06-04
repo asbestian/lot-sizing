@@ -10,4 +10,5 @@ module algorithm {
   requires graph;
   requires org.jgrapht.core;
   requires org.slf4j;
+  requires it.unimi.dsi.fastutil;
 }

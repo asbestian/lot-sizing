@@ -3,6 +3,8 @@ package de.asbestian.lotsizing.algorithm.cycle;
 import de.asbestian.lotsizing.algorithm.scc.Tarjan;
 import de.asbestian.lotsizing.graph.Cycle;
 import de.asbestian.lotsizing.graph.vertex.Vertex;
+import it.unimi.dsi.fastutil.ints.IntList;
+import it.unimi.dsi.fastutil.ints.IntListIterator;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -23,7 +25,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Finds all simple directed cycles via Johnson's algorithm.
+ * Class for computing all simple directed cycles.
  *
  * @author Sebastian Schenker
  */
@@ -44,6 +46,76 @@ public class CycleFinder {
     this.tarjan = new Tarjan(graph);
   }
 
+  /**
+   * Computes all simple directed cycles via Johnson's algorithm.
+   *
+   * @param indices Sorted vertex indices of considered underlying graph.
+   * @return Simple directed cycles of underlying graph
+   */
+  public List<Cycle> computeCycles(final IntList indices) {
+    if (indices.isEmpty()) {
+      return Collections.emptyList();
+    }
+    clearState();
+    List<Cycle> cycles = new ArrayList<>();
+    final IntListIterator iter = indices.iterator();
+    do {
+      int idThreshold = iter.nextInt();
+      final Collection<Set<Vertex>> stronglyConnectedComponents = tarjan.computeSCCs(idThreshold);
+      if (stronglyConnectedComponents.isEmpty()) {
+        return cycles;
+      }
+      final Pair<Graph<Vertex, DefaultEdge>, Vertex> result =
+          getMinVertexSCC(stronglyConnectedComponents);
+      final Graph<Vertex, DefaultEdge> leastSCC = result.getFirst();
+      final Vertex leastVertex = result.getSecond();
+      for (final DefaultEdge edge : leastSCC.outgoingEdgesOf(leastVertex)) {
+        final Vertex target = leastSCC.getEdgeTarget(edge);
+        blocked.remove(target);
+        getBlockedVertices(target);
+      }
+      findCyclesInSCC(leastVertex.getId(), leastVertex, leastSCC, cycles);
+    } while (iter.hasNext());
+    return cycles;
+  }
+
+  private boolean findCyclesInSCC(
+      final int startIndex,
+      final Vertex vertex,
+      final Graph<Vertex, DefaultEdge> scc,
+      final List<Cycle> cycles) {
+    boolean foundCycle = false;
+    stack.push(vertex);
+    blocked.add(vertex);
+    for (final DefaultEdge edge : scc.outgoingEdgesOf(vertex)) {
+      final Vertex target = scc.getEdgeTarget(edge);
+      if (target.getId() == startIndex) { // cycle found
+        final List<Vertex> vertices = new ArrayList<>(stack.size());
+        stack.descendingIterator().forEachRemaining(vertices::add);
+        foundCycle = true;
+        cycles.add(new Cycle(vertices));
+      } else if (!blocked.contains(target)) {
+        final boolean gotCycle = findCyclesInSCC(startIndex, target, scc, cycles);
+        foundCycle = foundCycle || gotCycle;
+      }
+    }
+    if (foundCycle) {
+      unblock(vertex);
+    } else {
+      scc.outgoingEdgesOf(vertex).stream()
+          .map(scc::getEdgeTarget)
+          .forEach(target -> getBlockedVertices(target).add(vertex));
+    }
+    stack.pop();
+    return foundCycle;
+  }
+
+  /**
+   * Computes all simple directed cycles via Johnson's algorithm. Assumes that the vertex indices of
+   * the underlying graph are numbered from 0,...,|vertices|-1 without any gaps.
+   *
+   * @param queue Data structure carrying found cycles
+   */
   public void computeCycles(final BlockingQueue<Cycle> queue) {
     clearState();
     int threshold = 0;
@@ -57,9 +129,9 @@ public class CycleFinder {
       final Graph<Vertex, DefaultEdge> leastSCC = result.getFirst();
       final Vertex leastVertex = result.getSecond();
       for (final DefaultEdge edge : leastSCC.outgoingEdgesOf(leastVertex)) {
-        final Vertex vertex = leastSCC.getEdgeTarget(edge);
-        blocked.remove(vertex);
-        getBlockedVertices(vertex);
+        final Vertex target = leastSCC.getEdgeTarget(edge);
+        blocked.remove(target);
+        getBlockedVertices(target);
       }
       threshold = leastVertex.getId();
       try {
