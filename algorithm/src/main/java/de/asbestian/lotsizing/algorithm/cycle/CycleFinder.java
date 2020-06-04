@@ -46,7 +46,7 @@ public class CycleFinder {
   /**
    * Computes all simple directed cycles via Johnson's algorithm.
    *
-   * @param graph Directed graph for which to compute cycles
+   * @param graph Directed graph for which to compute cycles =======
    * @return Simple directed cycles of underlying graph
    */
   public List<Cycle> computeCycles(final Graph<Vertex, DefaultEdge> graph) {
@@ -110,8 +110,7 @@ public class CycleFinder {
   }
 
   /**
-   * Computes all simple directed cycles via Johnson's algorithm. Assumes that the vertex indices of
-   * the underlying graph are numbered from 0,...,|vertices|-1 without any gaps.
+   * Computes all simple directed cycles via Johnson's algorithm.
    *
    * @param graph Directed graph for which to compute cycles
    * @param queue Data structure carrying found cycles
