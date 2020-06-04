@@ -143,6 +143,11 @@ public class Schedule {
   }
 
   @Override
+  public int hashCode() {
+    return Arrays.hashCode(schedule);
+  }
+
+  @Override
   public String toString() {
     return Arrays.toString(schedule);
   }
