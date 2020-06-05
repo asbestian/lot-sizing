@@ -145,7 +145,6 @@ public class CycleFinder {
       try {
         findCyclesInSCC(leastVertex.getId(), leastVertex, leastSCC, queue);
       } catch (InterruptedException e) {
-        LOGGER.info(e.getMessage());
         Thread.currentThread().interrupt();
         return;
       }
@@ -153,7 +152,6 @@ public class CycleFinder {
     try {
       queue.put(new Cycle(Collections.emptyList()));
     } catch (InterruptedException e) {
-      LOGGER.info(e.getMessage());
       Thread.currentThread().interrupt();
     }
   }

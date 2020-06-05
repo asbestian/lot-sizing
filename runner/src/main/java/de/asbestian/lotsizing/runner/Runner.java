@@ -1,7 +1,8 @@
 package de.asbestian.lotsizing.runner;
 
 import de.asbestian.lotsizing.algorithm.Enumeration;
-import de.asbestian.lotsizing.algorithm.LocalSearch;
+import de.asbestian.lotsizing.algorithm.LocalSearchImpl;
+import de.asbestian.lotsizing.algorithm.Solver;
 import de.asbestian.lotsizing.graph.Cycle;
 import de.asbestian.lotsizing.graph.Problem;
 import de.asbestian.lotsizing.graph.Schedule;
@@ -34,13 +35,6 @@ public class Runner implements Callable<Integer> {
   private static final Logger LOGGER = LoggerFactory.getLogger(Runner.class);
 
   @Option(
-      names = {"--numThreads"},
-      description =
-          "Maximal number of threads used in local search procedure. Default value is ${DEFAULT-VALUE}.",
-      defaultValue = "4")
-  private int numThreads;
-
-  @Option(
       names = {"-t", "--timeLimit"},
       description = "Time limit (in seconds) of computation. Default value is ${DEFAULT-VALUE}.",
       defaultValue = "600")
@@ -57,8 +51,8 @@ public class Runner implements Callable<Integer> {
       names = {"-n", "--neighbourhood"},
       description =
           "Size of demand vertex neighbourhood used in local search procedure. Default value is ${DEFAULT-VALUE}.",
-      defaultValue = "5")
-  private int neighbourhood;
+      defaultValue = "3")
+  private int neighbourhoodSize;
 
   @Parameters(paramLabel = "file", description = "The file containing the problem instance.")
   private String file;
@@ -90,7 +84,7 @@ public class Runner implements Callable<Integer> {
           schedule.getChangeOverCost(),
           schedule.getInventoryCost());
     } else {
-      final LocalSearch localSearch = new LocalSearch(input, problem, numThreads, neighbourhood);
+      final Solver localSearch = new LocalSearchImpl(input, problem, neighbourhoodSize);
       final Schedule schedule = localSearch.search(timeLimit);
       LOGGER.info("Best schedule: {}", schedule);
       LOGGER.info(

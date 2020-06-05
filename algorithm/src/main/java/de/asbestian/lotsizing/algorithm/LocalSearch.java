@@ -1,139 +1,116 @@
 package de.asbestian.lotsizing.algorithm;
 
-import com.google.common.collect.Iterables;
 import de.asbestian.lotsizing.algorithm.cycle.CycleFinder;
 import de.asbestian.lotsizing.graph.Cycle;
 import de.asbestian.lotsizing.graph.Problem;
 import de.asbestian.lotsizing.graph.Schedule;
-import de.asbestian.lotsizing.graph.vertex.DemandVertex;
 import de.asbestian.lotsizing.graph.vertex.Vertex;
 import de.asbestian.lotsizing.input.Input;
 import java.time.Duration;
 import java.time.Instant;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Comparator;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.BlockingQueue;
 import org.jgrapht.Graph;
-import org.jgrapht.graph.AsSubgraph;
+import org.jgrapht.alg.util.Pair;
 import org.jgrapht.graph.DefaultEdge;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /** @author Sebastian Schenker */
-public class LocalSearch implements Solver {
+abstract class LocalSearch implements Solver {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(LocalSearch.class);
-  private final Input input;
-  private final Problem problem;
-  private final ExecutorService executorService;
-  private final int neighbourhoodSize;
+  private static final int QUEUE_CAPACITY = 100;
+  protected final Input input;
+  protected final Problem problem;
 
-  public LocalSearch(
-      final Input input, final Problem problem, final int numThreads, final int neighbourhoodSize) {
+  LocalSearch(final Input input, final Problem problem) {
     this.input = input;
     this.problem = problem;
-    this.executorService = Executors.newFixedThreadPool(numThreads);
-    this.neighbourhoodSize = neighbourhoodSize;
   }
 
   @Override
   public Schedule search(double timeLimit) {
     final Instant start = Instant.now();
-    Schedule bestSchedule = problem.computeOptimalInventoryCostSchedule();
+    Schedule currentSchedule = problem.computeOptimalInventoryCostSchedule();
     if (LOGGER.isDebugEnabled()) {
-      LOGGER.debug("Initial schedule: {}", bestSchedule);
+      LOGGER.debug("Initial schedule: {}", currentSchedule);
       LOGGER.debug(
           "Cost: {} (changeover cost = {}, inventory cost = {})",
-          bestSchedule.getCost(),
-          bestSchedule.getChangeOverCost(),
-          bestSchedule.getInventoryCost());
+          currentSchedule.getCost(),
+          currentSchedule.getChangeOverCost(),
+          currentSchedule.getInventoryCost());
     }
-    long numIterations = 0;
+    boolean newScheduleFound = false;
+    Graph<Vertex, DefaultEdge> resGraph = problem.getResidualGraph(currentSchedule);
     while (Duration.between(start, Instant.now()).toSeconds() <= timeLimit) {
-      boolean improvement = false;
-      final List<Callable<Schedule>> callables = createCallables(bestSchedule);
-      try {
-        List<Future<Schedule>> futures = executorService.invokeAll(callables);
-        for (Future<Schedule> future : futures) {
-          Schedule schedule = future.get();
-          if (schedule.getCost() < bestSchedule.getCost()) {
-            bestSchedule = schedule;
-            improvement = true;
-          }
-        }
-      } catch (InterruptedException | ExecutionException e) {
-        LOGGER.info(e.getMessage());
-        executorService.shutdown();
-        Thread.currentThread().interrupt();
-        return bestSchedule;
+      if (newScheduleFound) {
+        resGraph = problem.getResidualGraph(currentSchedule);
       }
-      if (LOGGER.isDebugEnabled() && improvement) {
-        LOGGER.debug("Improvement: {}", bestSchedule);
+      final Graph<Vertex, DefaultEdge> subResGraph =
+          createSubResidualGraph(newScheduleFound, resGraph);
+      Pair<Boolean, Schedule> ret = computeSchedule(subResGraph, currentSchedule);
+      newScheduleFound = ret.getFirst();
+      currentSchedule = ret.getSecond();
+      if (LOGGER.isDebugEnabled() && newScheduleFound) {
+        LOGGER.debug("Improvement: {}", currentSchedule);
         LOGGER.debug(
             "Cost: {} (changeover cost = {}, inventory cost = {})",
-            bestSchedule.getCost(),
-            bestSchedule.getChangeOverCost(),
-            bestSchedule.getInventoryCost());
+            currentSchedule.getCost(),
+            currentSchedule.getChangeOverCost(),
+            currentSchedule.getInventoryCost());
       }
-      ++numIterations;
     }
-    executorService.shutdown();
-    if (LOGGER.isDebugEnabled()) {
-      LOGGER.debug("Number of iterations: {}", numIterations);
-      LOGGER.debug("Time spent: {} seconds.", Duration.between(start, Instant.now()).toSeconds());
-    }
-    return bestSchedule;
+    return currentSchedule;
   }
 
-  private List<Callable<Schedule>> createCallables(final Schedule schedule) {
-    final Graph<Vertex, DefaultEdge> resGraph = problem.getResidualGraph(schedule);
-    final List<Callable<Schedule>> callables = new ArrayList<>();
-    for (final Set<DemandVertex> partition : computePartition()) {
-      callables.add(() -> computeOptimalNeighbourhoodSchedule(partition, resGraph, schedule));
-    }
-    return callables;
-  }
+  /**
+   * Creates a subgraph of the currently considered residual graph.
+   *
+   * @param newResGraph Indicates whether given residual graph is different from last iteration
+   * @param resGraph Currently considered residual graph
+   * @return Subgraph of residual graph
+   */
+  protected abstract Graph<Vertex, DefaultEdge> createSubResidualGraph(
+      final boolean newResGraph, final Graph<Vertex, DefaultEdge> resGraph);
 
-  private Iterable<Set<DemandVertex>> computePartition() {
-    Collection<Set<DemandVertex>> partition = new ArrayList<>();
-    for (List<DemandVertex> part :
-        Iterables.partition(problem.getDemandVertices(), neighbourhoodSize)) {
-      partition.add(new HashSet<>(part));
-    }
-    return partition;
-  }
-
-  private Graph<Vertex, DefaultEdge> createSubResidualGraph(
-      final Set<DemandVertex> neighbourhood, final Graph<Vertex, DefaultEdge> resGraph) {
-    final Graph<Vertex, DefaultEdge> subResGraph = new AsSubgraph<>(resGraph);
-    problem.getDemandVertices().stream()
-        .filter(v -> !neighbourhood.contains(v))
-        .forEach(subResGraph::removeVertex);
-    if (LOGGER.isTraceEnabled()) {
-      LOGGER.trace("SubresidualGraph - number of edges: {}", subResGraph.edgeSet().size());
-    }
-    return subResGraph;
-  }
-
-  private Schedule computeOptimalNeighbourhoodSchedule(
-      final Set<DemandVertex> neighbourhood,
-      final Graph<Vertex, DefaultEdge> resGraph,
-      final Schedule currentBestSchedule) {
-    final Graph<Vertex, DefaultEdge> subResGraph = createSubResidualGraph(neighbourhood, resGraph);
+  /**
+   * Attempts to compute new (and better) schedule.
+   *
+   * @param subResGraph Subgraph of residual graph whose cycles are considered for finding new
+   *     schedules
+   * @param currentSchedule Currently considered schedule
+   * @return true if better schedule was found
+   */
+  private Pair<Boolean, Schedule> computeSchedule(
+      final Graph<Vertex, DefaultEdge> subResGraph, final Schedule currentSchedule) {
     final CycleFinder cycleFinder = new CycleFinder();
-    final List<Cycle> cycles = cycleFinder.computeCycles(subResGraph);
-    return cycles.stream()
-        .map(cycle -> currentBestSchedule.compute(cycle, input))
-        .filter(schedule -> schedule.getCost() < currentBestSchedule.getCost())
-        .min(Comparator.comparingDouble(Schedule::getCost))
-        .orElse(currentBestSchedule);
+    final BlockingQueue<Cycle> queue = new ArrayBlockingQueue<>(QUEUE_CAPACITY);
+    final Thread computeCycles = new Thread(() -> cycleFinder.computeCycles(subResGraph, queue));
+    computeCycles.start();
+    Cycle cycle;
+    boolean improvement = false;
+    Schedule bestSchedule = currentSchedule;
+    long cycleCounter = 0;
+    do {
+      try {
+        cycle = queue.take();
+      } catch (final InterruptedException e) {
+        computeCycles.interrupt();
+        break;
+      }
+      final Schedule schedule = currentSchedule.compute(cycle, input);
+      ++cycleCounter;
+      if (schedule.getCost() < currentSchedule.getCost()) {
+        computeCycles.interrupt();
+        bestSchedule = schedule;
+        improvement = true;
+        break;
+      }
+    } while (!cycle.isEmpty());
+    if (LOGGER.isDebugEnabled()) {
+      LOGGER.debug("Number of investigated cycles: {}", cycleCounter);
+    }
+    return Pair.of(improvement, bestSchedule);
   }
 }
