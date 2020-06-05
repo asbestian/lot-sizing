@@ -46,7 +46,7 @@ public class CycleFinder {
   /**
    * Computes all simple directed cycles via Johnson's algorithm.
    *
-   * @param ToDo
+   * @param graph Directed graph for which to compute cycles
    * @return Simple directed cycles of underlying graph
    */
   public List<Cycle> computeCycles(final Graph<Vertex, DefaultEdge> graph) {
@@ -113,16 +113,21 @@ public class CycleFinder {
    * Computes all simple directed cycles via Johnson's algorithm. Assumes that the vertex indices of
    * the underlying graph are numbered from 0,...,|vertices|-1 without any gaps.
    *
+   * @param graph Directed graph for which to compute cycles
    * @param queue Data structure carrying found cycles
    */
   public void computeCycles(
       final Graph<Vertex, DefaultEdge> graph, final BlockingQueue<Cycle> queue) {
     this.graph = graph;
     this.tarjan = new Tarjan(graph);
+    if (graph.vertexSet().isEmpty()) {
+      return;
+    }
     clearState();
-    int threshold = 0;
-    while (threshold < graph.vertexSet().size()) {
-      final Collection<Set<Vertex>> stronglyConnectedComponents = tarjan.computeSCCs(threshold);
+    final Iterator<Vertex> iter = graph.vertexSet().iterator();
+    do {
+      int idThreshold = iter.next().getId();
+      final Collection<Set<Vertex>> stronglyConnectedComponents = tarjan.computeSCCs(idThreshold);
       if (stronglyConnectedComponents.isEmpty()) {
         return;
       }
@@ -135,16 +140,14 @@ public class CycleFinder {
         blocked.remove(target);
         getBlockedVertices(target);
       }
-      threshold = leastVertex.getId();
       try {
-        findCyclesInSCC(threshold, leastVertex, leastSCC, queue);
+        findCyclesInSCC(leastVertex.getId(), leastVertex, leastSCC, queue);
       } catch (InterruptedException e) {
         LOGGER.info(e.getMessage());
         Thread.currentThread().interrupt();
         return;
       }
-      ++threshold;
-    }
+    } while (iter.hasNext());
     try {
       queue.put(new Cycle(Collections.emptyList()));
     } catch (InterruptedException e) {
