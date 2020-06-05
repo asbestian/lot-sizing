@@ -29,8 +29,8 @@ import org.slf4j.LoggerFactory;
  * @author Sebastian Schenker
  */
 public class CycleFinder {
-  private static final Logger LOGGER = LoggerFactory.getLogger(CycleFinder.class);
 
+  private static final Logger LOGGER = LoggerFactory.getLogger(CycleFinder.class);
   private final Set<Vertex> blocked;
   private final Map<Vertex, Set<Vertex>> blockedMap;
   private final ArrayDeque<Vertex> stack;
@@ -46,7 +46,7 @@ public class CycleFinder {
   /**
    * Computes all simple directed cycles via Johnson's algorithm.
    *
-   * @param graph Directed graph for which to compute cycles
+   * @param graph Directed graph for which to compute cycles =======
    * @return Simple directed cycles of underlying graph
    */
   public List<Cycle> computeCycles(final Graph<Vertex, DefaultEdge> graph) {
@@ -75,6 +75,9 @@ public class CycleFinder {
       }
       findCyclesInSCC(leastVertex.getId(), leastVertex, leastSCC, cycles);
     } while (iter.hasNext());
+    if (LOGGER.isTraceEnabled()) {
+      LOGGER.trace("Number of cycles: {}", cycles.size());
+    }
     return cycles;
   }
 
@@ -110,8 +113,7 @@ public class CycleFinder {
   }
 
   /**
-   * Computes all simple directed cycles via Johnson's algorithm. Assumes that the vertex indices of
-   * the underlying graph are numbered from 0,...,|vertices|-1 without any gaps.
+   * Computes all simple directed cycles via Johnson's algorithm.
    *
    * @param graph Directed graph for which to compute cycles
    * @param queue Data structure carrying found cycles
@@ -143,7 +145,6 @@ public class CycleFinder {
       try {
         findCyclesInSCC(leastVertex.getId(), leastVertex, leastSCC, queue);
       } catch (InterruptedException e) {
-        LOGGER.info(e.getMessage());
         Thread.currentThread().interrupt();
         return;
       }
@@ -151,7 +152,6 @@ public class CycleFinder {
     try {
       queue.put(new Cycle(Collections.emptyList()));
     } catch (InterruptedException e) {
-      LOGGER.info(e.getMessage());
       Thread.currentThread().interrupt();
     }
   }

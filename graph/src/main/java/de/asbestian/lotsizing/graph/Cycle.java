@@ -20,7 +20,7 @@ public class Cycle {
   private final List<DecisionVertex> activatedDecisionVertices;
   private final List<DecisionVertex> deactivatedDecisionVertices;
 
-  private Cycle() {
+  public Cycle() {
     reverseGraphEdges = new ArrayList<>();
     originalGraphEdges = new ArrayList<>();
     activatedDecisionVertices = new ArrayList<>();

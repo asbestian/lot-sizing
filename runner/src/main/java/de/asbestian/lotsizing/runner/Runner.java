@@ -1,6 +1,8 @@
 package de.asbestian.lotsizing.runner;
 
 import de.asbestian.lotsizing.algorithm.Enumeration;
+import de.asbestian.lotsizing.algorithm.LocalSearchImpl;
+import de.asbestian.lotsizing.algorithm.Solver;
 import de.asbestian.lotsizing.graph.Cycle;
 import de.asbestian.lotsizing.graph.Problem;
 import de.asbestian.lotsizing.graph.Schedule;
@@ -32,18 +34,28 @@ public class Runner implements Callable<Integer> {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(Runner.class);
 
-  @Parameters(paramLabel = "file", description = "The file containing the problem instance.")
-  private String file;
-
   @Option(
       names = {"-t", "--timeLimit"},
-      description = "Time limit (in seconds) for computation. Default is no time limit.")
-  private double timeLimit = Double.POSITIVE_INFINITY;
+      description = "Time limit (in seconds) of computation. Default value is ${DEFAULT-VALUE}.",
+      defaultValue = "600")
+  private double timeLimit;
 
   @Option(
       names = {"-e", "--enumerate"},
-      description = "Do full enumeration of the search space.")
-  private boolean enumerate = false;
+      description =
+          "Attempt full enumeration of the search space. (Note that given time limit applies.)",
+      defaultValue = "false")
+  private boolean enumerate;
+
+  @Option(
+      names = {"-n", "--neighbourhood"},
+      description =
+          "Size of demand vertex neighbourhood used in local search procedure. Default value is ${DEFAULT-VALUE}.",
+      defaultValue = "3")
+  private int neighbourhoodSize;
+
+  @Parameters(paramLabel = "file", description = "The file containing the problem instance.")
+  private String file;
 
   public static void main(final String... args) {
     final int exitCode = new CommandLine(new Runner()).execute(args);
@@ -68,6 +80,15 @@ public class Runner implements Callable<Integer> {
       LOGGER.info(
           "{} cost: {} (changeover cost = {}, inventory cost = {})",
           enumeration.isSearchSpaceExhausted() ? "Optimal" : "Best",
+          schedule.getCost(),
+          schedule.getChangeOverCost(),
+          schedule.getInventoryCost());
+    } else {
+      final Solver localSearch = new LocalSearchImpl(input, problem, neighbourhoodSize);
+      final Schedule schedule = localSearch.search(timeLimit);
+      LOGGER.info("Best schedule: {}", schedule);
+      LOGGER.info(
+          "Cost: {} (changeover cost = {}, inventory cost = {})",
           schedule.getCost(),
           schedule.getChangeOverCost(),
           schedule.getInventoryCost());
