@@ -111,18 +111,23 @@ public class LocalSearch implements Solver {
     return partition;
   }
 
-  private Schedule computeOptimalNeighbourhoodSchedule(
-      final Set<DemandVertex> neighbourhood,
-      final Graph<Vertex, DefaultEdge> resGraph,
-      final Schedule currentBestSchedule) {
+  private Graph<Vertex, DefaultEdge> createSubResidualGraph(
+      final Set<DemandVertex> neighbourhood, final Graph<Vertex, DefaultEdge> resGraph) {
     final Graph<Vertex, DefaultEdge> subResGraph = new AsSubgraph<>(resGraph);
     problem.getDemandVertices().stream()
         .filter(v -> !neighbourhood.contains(v))
         .forEach(subResGraph::removeVertex);
     if (LOGGER.isTraceEnabled()) {
-      LOGGER.trace("ResidualGraph - number of edges: {}", resGraph.edgeSet().size());
       LOGGER.trace("SubresidualGraph - number of edges: {}", subResGraph.edgeSet().size());
     }
+    return subResGraph;
+  }
+
+  private Schedule computeOptimalNeighbourhoodSchedule(
+      final Set<DemandVertex> neighbourhood,
+      final Graph<Vertex, DefaultEdge> resGraph,
+      final Schedule currentBestSchedule) {
+    final Graph<Vertex, DefaultEdge> subResGraph = createSubResidualGraph(neighbourhood, resGraph);
     final CycleFinder cycleFinder = new CycleFinder();
     final List<Cycle> cycles = cycleFinder.computeCycles(subResGraph);
     return cycles.stream()
