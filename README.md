@@ -39,4 +39,4 @@ Compilation & Execution
 
 Authors
 -------
-[Sebastian Schenker](https://github.com/asbestian)
+[Sebastian Schenker](https://asbestian.github.io)
