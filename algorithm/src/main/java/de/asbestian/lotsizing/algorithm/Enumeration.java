@@ -35,10 +35,9 @@ public class Enumeration implements Solver {
   }
 
   @Override
-  public Schedule search(double timeLimit) {
+  public Schedule search(final Schedule initSchedule, double timeLimit) {
     final Instant start = Instant.now();
     searchSpaceExhausted = false;
-    final Schedule initSchedule = problem.computeOptimalInventoryCostSchedule();
     if (LOGGER.isDebugEnabled()) {
       LOGGER.debug("Initial schedule: {}", initSchedule);
       LOGGER.debug(
