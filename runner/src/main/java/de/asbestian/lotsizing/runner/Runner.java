@@ -54,6 +54,13 @@ public class Runner implements Callable<Integer> {
       defaultValue = "3")
   private int neighbourhoodSize;
 
+  @Option(
+      names = {"-r", "--random"},
+      description =
+          "Use random schedule as initial schedule. Default is to use the optimal inventory cost schedule is used as initial schedule.",
+      defaultValue = "false")
+  private boolean randomSchedule;
+
   @Parameters(paramLabel = "file", description = "The file containing the problem instance.")
   private String file;
 
@@ -74,7 +81,11 @@ public class Runner implements Callable<Integer> {
     problem.build();
     if (enumerate) {
       final Enumeration enumeration = new Enumeration(input, problem);
-      final Schedule schedule = enumeration.search(timeLimit);
+      final Schedule initSchedule =
+          randomSchedule
+              ? problem.computeRandomSchedule()
+              : problem.computeOptimalInventoryCostSchedule();
+      final Schedule schedule = enumeration.search(initSchedule, timeLimit);
       LOGGER.info(
           "{} schedule: {}", enumeration.isSearchSpaceExhausted() ? "Optimal" : "Best", schedule);
       LOGGER.info(
@@ -85,7 +96,11 @@ public class Runner implements Callable<Integer> {
           schedule.getInventoryCost());
     } else {
       final Solver localSearch = new LocalSearchImpl(input, problem, neighbourhoodSize);
-      final Schedule schedule = localSearch.search(timeLimit);
+      final Schedule initSchedule =
+          randomSchedule
+              ? problem.computeRandomSchedule()
+              : problem.computeOptimalInventoryCostSchedule();
+      final Schedule schedule = localSearch.search(initSchedule, timeLimit);
       LOGGER.info("Best schedule: {}", schedule);
       LOGGER.info(
           "Cost: {} (changeover cost = {}, inventory cost = {})",

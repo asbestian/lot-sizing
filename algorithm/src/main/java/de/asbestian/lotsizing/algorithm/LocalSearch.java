@@ -30,9 +30,9 @@ abstract class LocalSearch implements Solver {
   }
 
   @Override
-  public Schedule search(double timeLimit) {
+  public Schedule search(final Schedule initSchedule, double timeLimit) {
     final Instant start = Instant.now();
-    Schedule currentSchedule = problem.computeOptimalInventoryCostSchedule();
+    Schedule currentSchedule = initSchedule;
     if (LOGGER.isDebugEnabled()) {
       LOGGER.debug("Initial schedule: {}", currentSchedule);
       LOGGER.debug(
@@ -60,6 +60,9 @@ abstract class LocalSearch implements Solver {
             currentSchedule.getChangeOverCost(),
             currentSchedule.getInventoryCost());
       }
+    }
+    if (LOGGER.isDebugEnabled()) {
+      LOGGER.debug("Time spent: {} seconds.", Duration.between(start, Instant.now()).toSeconds());
     }
     return currentSchedule;
   }
