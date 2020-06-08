@@ -100,6 +100,14 @@ public class Problem {
         .collect(Collectors.toUnmodifiableList());
   }
 
+  public DecisionVertex getDecisionVertex(final int machineType, final int timeSlot) {
+    return decisionVertices.get(Pair.of(machineType, timeSlot));
+  }
+
+  public TimeSlotVertex getTimeSlotVertex(final int timeSlot) {
+    return timeSlotVertices[timeSlot];
+  }
+
   /** Returns unmodifiable list of time slot vertices in ascending Id order */
   public List<TimeSlotVertex> getTimeSlotVertices() {
     return List.of(timeSlotVertices);
