@@ -111,8 +111,8 @@ abstract class LocalSearch implements Solver {
         break;
       }
     } while (!cycle.isEmpty());
-    if (LOGGER.isDebugEnabled()) {
-      LOGGER.debug("Number of investigated cycles: {}", cycleCounter);
+    if (LOGGER.isTraceEnabled()) {
+      LOGGER.trace("Number of investigated cycles: {}", cycleCounter);
     }
     return Pair.of(improvement, bestSchedule);
   }

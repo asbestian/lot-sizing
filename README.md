@@ -3,8 +3,8 @@
 About
 -----
 We consider the discrete, single-machine, multi-item, single-level [lot sizing problem](./doc/problem\_description.pdf). 
-The problem is solved via a graph algorithmic approach based on enumerating directed cycles in a residual graph which 
-represents all feasible schedules.
+The problem is solved via a graph algorithmic approach based on inspecting directed cycles in a residual graph which 
+represents feasible schedules.
 
 An outline of the approach can be found in [doc/graph-optimisation.pdf](./doc/graph-optimisation.pdf).
 

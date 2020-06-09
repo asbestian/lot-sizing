@@ -50,8 +50,8 @@ public class Runner implements Callable<Integer> {
   @Option(
       names = {"-n", "--neighbourhood"},
       description =
-          "Size of demand vertex neighbourhood used in local search procedure. Default value is ${DEFAULT-VALUE}.",
-      defaultValue = "3")
+          "Size of initial demand vertex neighbourhood used in local search procedure. Default value is ${DEFAULT-VALUE}.",
+      defaultValue = "4")
   private int neighbourhoodSize;
 
   @Option(
@@ -74,6 +74,11 @@ public class Runner implements Callable<Integer> {
     if (!Files.exists(Paths.get(file))) {
       System.err.println("Given file cannot be found.");
       return 1;
+    }
+    if (LOGGER.isDebugEnabled()) {
+      LOGGER.debug("Initial schedule: {}", randomSchedule ? "random" : "optimal inventory cost");
+      LOGGER.debug("Neighbourhood size: {}", neighbourhoodSize);
+      LOGGER.debug("Time limit: {} seconds", timeLimit);
     }
     final Input input = new Input();
     input.read(file);

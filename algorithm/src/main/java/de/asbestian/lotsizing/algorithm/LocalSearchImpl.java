@@ -1,14 +1,20 @@
 package de.asbestian.lotsizing.algorithm;
 
 import de.asbestian.lotsizing.graph.Problem;
+import de.asbestian.lotsizing.graph.vertex.DecisionVertex;
+import de.asbestian.lotsizing.graph.vertex.DemandVertex;
 import de.asbestian.lotsizing.graph.vertex.Vertex;
 import de.asbestian.lotsizing.input.Input;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
 import java.util.Random;
 import java.util.Set;
-import java.util.stream.Collectors;
 import org.jgrapht.Graph;
 import org.jgrapht.graph.AsSubgraph;
 import org.jgrapht.graph.DefaultEdge;
+import org.jgrapht.graph.SimpleDirectedGraph;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -18,32 +24,69 @@ public class LocalSearchImpl extends LocalSearch {
   private static final Logger LOGGER = LoggerFactory.getLogger(LocalSearchImpl.class);
   private static final int SEED = 1;
   private final Random random;
-  private final int neighbourhoodSize;
+  private final int subResGraphVertexSize;
+  private List<DemandVertex> demandVertices;
+  private int counter;
 
-  public LocalSearchImpl(final Input input, final Problem problem, final int neighbourhoodSize) {
+  public LocalSearchImpl(
+      final Input input, final Problem problem, final int subResGraphVertexSize) {
     super(input, problem);
     this.random = new Random(SEED);
-    this.neighbourhoodSize = neighbourhoodSize;
+    this.subResGraphVertexSize =
+        Math.min(problem.getDemandVertices().size(), subResGraphVertexSize);
+    this.demandVertices = new ArrayList<>(problem.getDemandVertices());
+    this.counter = 0;
   }
 
   @Override
   protected Graph<Vertex, DefaultEdge> createSubResidualGraph(
       final boolean newResGraph, Graph<Vertex, DefaultEdge> resGraph) {
-    final Set<Vertex> neighbourhood = getNeighbourhood();
-    final Graph<Vertex, DefaultEdge> subResGraph = new AsSubgraph<>(resGraph);
-    problem.getDemandVertices().stream()
-        .filter(v -> !neighbourhood.contains(v))
-        .forEach(subResGraph::removeVertex);
-    if (LOGGER.isTraceEnabled()) {
-      LOGGER.trace("SubresidualGraph - number of edges: {}", subResGraph.edgeSet().size());
+    final Set<Vertex> subResGraphVertices = getVerticesInSubResGraph(newResGraph);
+    return new AsSubgraph<>(resGraph, subResGraphVertices);
+    // return buildSubResGraph(subResGraphVertices, resGraph);
+  }
+
+  private Graph<Vertex, DefaultEdge> buildSubResGraph(
+      final Set<Vertex> vertices, final Graph<Vertex, DefaultEdge> resGraph) {
+    final Graph<Vertex, DefaultEdge> subResGraph = new SimpleDirectedGraph<>(DefaultEdge.class);
+    vertices.forEach(subResGraph::addVertex);
+    for (final Vertex vertex : vertices) {
+      resGraph.outgoingEdgesOf(vertex).stream()
+          .map(resGraph::getEdgeTarget)
+          .filter(subResGraph::containsVertex)
+          .forEach(target -> subResGraph.addEdge(vertex, target));
     }
     return subResGraph;
   }
 
-  private Set<Vertex> getNeighbourhood() {
-    return random
-        .ints(neighbourhoodSize, 0, problem.getDemandVertices().size())
-        .mapToObj(index -> problem.getDemandVertices().get(index))
-        .collect(Collectors.toSet());
+  private Set<Vertex> getVerticesInSubResGraph(final boolean newResGraph) {
+    if (newResGraph) {
+      demandVertices = new ArrayList<>(problem.getDemandVertices());
+      counter = 0;
+    } else {
+      ++counter;
+    }
+    if (counter >= problem.getDemandVertices().size() / subResGraphVertexSize) {
+      Collections.shuffle(demandVertices);
+      counter = 0;
+    }
+    int begin = random.nextInt(Math.max(1, demandVertices.size() - subResGraphVertexSize));
+    final List<DemandVertex> demandVerticesInSubResGraph =
+        demandVertices.subList(begin, begin + subResGraphVertexSize);
+    if (LOGGER.isTraceEnabled()) {
+      LOGGER.trace(
+          "Demand vertex indices in SubResGraph: [{}, {}]", begin, begin + subResGraphVertexSize);
+    }
+    final Set<Vertex> verticesInSubResGraph = new HashSet<>(demandVerticesInSubResGraph);
+    for (final DemandVertex demandVertex : demandVerticesInSubResGraph) {
+      for (int slot = 0; slot <= demandVertex.getTimeSlot(); ++slot) {
+        final DecisionVertex decisionVertex =
+            problem.getDecisionVertex(demandVertex.getType(), slot);
+        verticesInSubResGraph.add(decisionVertex);
+        verticesInSubResGraph.add(problem.getTimeSlotVertex(decisionVertex.getTimeSlot()));
+      }
+    }
+    verticesInSubResGraph.add(problem.getSuperSink());
+    return verticesInSubResGraph;
   }
 }
