@@ -12,6 +12,7 @@ import java.util.List;
 import java.util.Random;
 import java.util.Set;
 import org.jgrapht.Graph;
+import org.jgrapht.graph.AsSubgraph;
 import org.jgrapht.graph.DefaultEdge;
 import org.jgrapht.graph.SimpleDirectedGraph;
 import org.slf4j.Logger;
@@ -23,15 +24,16 @@ public class LocalSearchImpl extends LocalSearch {
   private static final Logger LOGGER = LoggerFactory.getLogger(LocalSearchImpl.class);
   private static final int SEED = 1;
   private final Random random;
-  private final int neighbourhoodSize;
+  private final int subResGraphVertexSize;
   private List<DemandVertex> demandVertices;
   private int counter;
 
   public LocalSearchImpl(
-      final Input input, final Problem problem, final int initialNeighbourhoodSize) {
+      final Input input, final Problem problem, final int subResGraphVertexSize) {
     super(input, problem);
     this.random = new Random(SEED);
-    this.neighbourhoodSize = initialNeighbourhoodSize;
+    this.subResGraphVertexSize =
+        Math.min(problem.getDemandVertices().size(), subResGraphVertexSize);
     this.demandVertices = new ArrayList<>(problem.getDemandVertices());
     this.counter = 0;
   }
@@ -39,20 +41,9 @@ public class LocalSearchImpl extends LocalSearch {
   @Override
   protected Graph<Vertex, DefaultEdge> createSubResidualGraph(
       final boolean newResGraph, Graph<Vertex, DefaultEdge> resGraph) {
-    final Set<Vertex> neighbourhood = getVerticesInSubResGraph(newResGraph);
-
-    /*final Graph<Vertex, DefaultEdge> subResGraph = new AsSubgraph<>(resGraph);
-    problem.getDemandVertices().stream()
-        .filter(v -> !neighbourhood.contains(v))
-        .forEach(subResGraph::removeVertex);
-    problem.getDecisionVertices().stream()
-        .filter(v -> !neighbourhood.contains(v))
-        .forEach(subResGraph::removeVertex);
-    problem.getTimeSlotVertices().stream()
-        .filter(v -> !neighbourhood.contains(v))
-        .forEach(subResGraph::removeVertex);*/
-
-    return buildSubResGraph(neighbourhood, resGraph);
+    final Set<Vertex> subResGraphVertices = getVerticesInSubResGraph(newResGraph);
+    return new AsSubgraph<>(resGraph, subResGraphVertices);
+    // return buildSubResGraph(subResGraphVertices, resGraph);
   }
 
   private Graph<Vertex, DefaultEdge> buildSubResGraph(
@@ -75,35 +66,27 @@ public class LocalSearchImpl extends LocalSearch {
     } else {
       ++counter;
     }
-    if (counter >= problem.getDemandVertices().size() / neighbourhoodSize) {
-      LOGGER.debug("Shuffling demand vertex partition.");
-      shuffleRandomDemandVertexPartition();
+    if (counter >= problem.getDemandVertices().size() / subResGraphVertexSize) {
+      Collections.shuffle(demandVertices);
       counter = 0;
     }
-    int begin =
-        random.nextInt(
-            (int) Math.max(1, Math.floor((double) demandVertices.size() - neighbourhoodSize)));
-    LOGGER.debug("Demand sublist: [{}, {}]", begin, begin + neighbourhoodSize);
-    final Set<Vertex> neighbourhood =
-        new HashSet<>(demandVertices.subList(begin, begin + neighbourhoodSize));
-    for (final DemandVertex demandVertex :
-        demandVertices.subList(begin, begin + neighbourhoodSize)) {
+    int begin = random.nextInt(Math.max(1, demandVertices.size() - subResGraphVertexSize));
+    final List<DemandVertex> demandVerticesInSubResGraph =
+        demandVertices.subList(begin, begin + subResGraphVertexSize);
+    if (LOGGER.isTraceEnabled()) {
+      LOGGER.trace(
+          "Demand vertex indices in SubResGraph: [{}, {}]", begin, begin + subResGraphVertexSize);
+    }
+    final Set<Vertex> verticesInSubResGraph = new HashSet<>(demandVerticesInSubResGraph);
+    for (final DemandVertex demandVertex : demandVerticesInSubResGraph) {
       for (int slot = 0; slot <= demandVertex.getTimeSlot(); ++slot) {
         final DecisionVertex decisionVertex =
             problem.getDecisionVertex(demandVertex.getType(), slot);
-        neighbourhood.add(decisionVertex);
-        neighbourhood.add(problem.getTimeSlotVertex(decisionVertex.getTimeSlot()));
+        verticesInSubResGraph.add(decisionVertex);
+        verticesInSubResGraph.add(problem.getTimeSlotVertex(decisionVertex.getTimeSlot()));
       }
     }
-    neighbourhood.add(problem.getSuperSink());
-    return neighbourhood;
-  }
-
-  private void shuffleRandomDemandVertexPartition() {
-    /*int begin =
-        random.nextInt(
-            (int) Math.max(1, Math.floor((double) demandVertices.size() - neighbourhoodSize)));
-    Collections.shuffle(demandVertices.subList(begin, demandVertices.size()), random);*/
-    Collections.shuffle(demandVertices);
+    verticesInSubResGraph.add(problem.getSuperSink());
+    return verticesInSubResGraph;
   }
 }
