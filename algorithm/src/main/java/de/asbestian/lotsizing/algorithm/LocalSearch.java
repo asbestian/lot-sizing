@@ -8,6 +8,9 @@ import de.asbestian.lotsizing.graph.vertex.Vertex;
 import de.asbestian.lotsizing.input.Input;
 import java.time.Duration;
 import java.time.Instant;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import org.jgrapht.Graph;
@@ -23,10 +26,12 @@ abstract class LocalSearch implements Solver {
   private static final int QUEUE_CAPACITY = 100;
   protected final Input input;
   protected final Problem problem;
+  protected final boolean useGreatestDescent;
 
-  LocalSearch(final Input input, final Problem problem) {
+  LocalSearch(final Input input, final Problem problem, final boolean useGreatestDescent) {
     this.input = input;
     this.problem = problem;
+    this.useGreatestDescent = useGreatestDescent;
   }
 
   @Override
@@ -49,11 +54,13 @@ abstract class LocalSearch implements Solver {
       }
       final Graph<Vertex, DefaultEdge> subResGraph =
           createSubResidualGraph(newScheduleFound, resGraph);
-      Pair<Boolean, Schedule> ret = computeSchedule(subResGraph, currentSchedule);
+      Pair<Boolean, Schedule> ret = useGreatestDescent ? computeBestImprovementSchedule(subResGraph, currentSchedule) : computeFirstImprovementSchedule(subResGraph, currentSchedule);
       newScheduleFound = ret.getFirst();
       currentSchedule = ret.getSecond();
+      if (LOGGER.isTraceEnabled() && newScheduleFound) {
+        LOGGER.trace("Improvement: {}", currentSchedule);
+      }
       if (LOGGER.isDebugEnabled() && newScheduleFound) {
-        LOGGER.debug("Improvement: {}", currentSchedule);
         LOGGER.debug(
             "Cost: {} (changeover cost = {}, inventory cost = {})",
             currentSchedule.getCost(),
@@ -77,6 +84,15 @@ abstract class LocalSearch implements Solver {
   protected abstract Graph<Vertex, DefaultEdge> createSubResidualGraph(
       final boolean newResGraph, final Graph<Vertex, DefaultEdge> resGraph);
 
+  private Pair<Boolean, Schedule> computeBestImprovementSchedule(final Graph<Vertex, DefaultEdge> subResGraph, final Schedule currentSchedule) {
+    final CycleFinder cycleFinder = new CycleFinder();
+    final List<Cycle> cycles = cycleFinder.computeCycles(subResGraph);
+    final Optional<Schedule> bestSchedule = cycles.stream().map(cycle -> currentSchedule.compute(cycle, input))
+        .filter(schedule -> schedule.getCost() < currentSchedule.getCost())
+        .min(Comparator.comparingDouble(Schedule::getCost));
+    return bestSchedule.isEmpty() ? Pair.of(false, currentSchedule) : Pair.of(true, bestSchedule.get());
+  }
+
   /**
    * Attempts to compute new (and better) schedule.
    *
@@ -85,7 +101,7 @@ abstract class LocalSearch implements Solver {
    * @param currentSchedule Currently considered schedule
    * @return true if better schedule was found
    */
-  private Pair<Boolean, Schedule> computeSchedule(
+  private Pair<Boolean, Schedule> computeFirstImprovementSchedule(
       final Graph<Vertex, DefaultEdge> subResGraph, final Schedule currentSchedule) {
     final CycleFinder cycleFinder = new CycleFinder();
     final BlockingQueue<Cycle> queue = new ArrayBlockingQueue<>(QUEUE_CAPACITY);

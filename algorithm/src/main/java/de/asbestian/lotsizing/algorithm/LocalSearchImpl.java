@@ -25,15 +25,17 @@ public class LocalSearchImpl extends LocalSearch {
   private static final int SEED = 1;
   private final Random random;
   private final int subResGraphVertexSize;
+  private final int shufflingThreshold;
   private List<DemandVertex> demandVertices;
   private int counter;
 
   public LocalSearchImpl(
-      final Input input, final Problem problem, final int subResGraphVertexSize) {
-    super(input, problem);
+      final Input input, final Problem problem, final int subResGraphVertexSize, final boolean useGreatestDescent) {
+    super(input, problem, useGreatestDescent);
     this.random = new Random(SEED);
     this.subResGraphVertexSize =
         Math.min(problem.getDemandVertices().size(), subResGraphVertexSize);
+    this.shufflingThreshold = 2*problem.getDemandVertices().size() / subResGraphVertexSize;
     this.demandVertices = new ArrayList<>(problem.getDemandVertices());
     this.counter = 0;
   }
@@ -66,8 +68,9 @@ public class LocalSearchImpl extends LocalSearch {
     } else {
       ++counter;
     }
-    if (counter >= problem.getDemandVertices().size() / subResGraphVertexSize) {
+    if (counter >= shufflingThreshold) {
       Collections.shuffle(demandVertices);
+      LOGGER.debug("Shuffling demand vertices.");
       counter = 0;
     }
     int begin = random.nextInt(Math.max(1, demandVertices.size() - subResGraphVertexSize));
