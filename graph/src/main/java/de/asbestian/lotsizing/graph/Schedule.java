@@ -10,6 +10,7 @@ import it.unimi.dsi.fastutil.ints.Int2ObjectMaps;
 import it.unimi.dsi.fastutil.ints.Int2ObjectRBTreeMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectSortedMap;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.stream.IntStream;
@@ -84,6 +85,10 @@ public class Schedule {
 
   public Int2ObjectMap<DemandVertex> getSlot2Demand() {
     return Int2ObjectMaps.unmodifiable(production);
+  }
+
+  public List<DemandVertex> getNonIdleProduction() {
+    return new ArrayList<>(production.values());
   }
 
   public double getChangeOverCost() {
