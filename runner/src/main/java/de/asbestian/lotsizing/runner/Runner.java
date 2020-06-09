@@ -61,6 +61,12 @@ public class Runner implements Callable<Integer> {
       defaultValue = "false")
   private boolean randomSchedule;
 
+  @Option(
+      names = {"-g", "--greatestDescent"},
+      description = "Use greatest descent improvement. Default is to first descent improvement.",
+      defaultValue = "false")
+  private boolean greatestDescent;
+
   @Parameters(paramLabel = "file", description = "The file containing the problem instance.")
   private String file;
 
@@ -100,7 +106,7 @@ public class Runner implements Callable<Integer> {
           schedule.getChangeOverCost(),
           schedule.getInventoryCost());
     } else {
-      final Solver localSearch = new LocalSearchImpl(input, problem, neighbourhoodSize);
+      final Solver localSearch = new LocalSearchImpl(input, problem, neighbourhoodSize, greatestDescent);
       final Schedule initSchedule =
           randomSchedule
               ? problem.computeRandomSchedule()
