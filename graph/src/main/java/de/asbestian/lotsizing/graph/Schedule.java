@@ -5,11 +5,15 @@ import de.asbestian.lotsizing.graph.vertex.DemandVertex;
 import de.asbestian.lotsizing.graph.vertex.Vertex;
 import de.asbestian.lotsizing.graph.vertex.Vertex.Type;
 import de.asbestian.lotsizing.input.Input;
-import java.util.Arrays;
+import it.unimi.dsi.fastutil.ints.Int2ObjectRBTreeMap;
+import it.unimi.dsi.fastutil.ints.Int2ObjectSortedMap;
+import it.unimi.dsi.fastutil.ints.IntArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
+import java.util.stream.IntStream;
 import org.jgrapht.alg.util.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -18,16 +22,16 @@ import org.slf4j.LoggerFactory;
 public class Schedule {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(Schedule.class);
-  private final Collection<Pair<Vertex, Vertex>>
-      edges; // the original graph edges used in this schedule
-  private final int[] schedule;
+  private final Set<Pair<Vertex, Vertex>> edges; // the original graph edges used in schedule
+  private final int length; // number of time slots in entire schedule
+  private final Int2ObjectSortedMap<DemandVertex> production;
   private final double changeOverCost;
   private final double inventoryCost;
 
   public Schedule(final Input input, final Collection<Pair<Vertex, Vertex>> usedEdges) {
     this.edges = new HashSet<>();
-    this.schedule = new int[input.getNumTimeSlots()];
-    Arrays.fill(schedule, -1);
+    this.length = input.getNumTimeSlots();
+    this.production = new Int2ObjectRBTreeMap<>();
     usedEdges.stream()
         .peek(this.edges::add)
         .filter(
@@ -37,55 +41,43 @@ public class Schedule {
         .forEach(
             pair -> {
               final var decisionVertex = (DecisionVertex) pair.getSecond();
-              this.schedule[decisionVertex.getTimeSlot()] = decisionVertex.getType();
+              this.production.put(decisionVertex.getTimeSlot(), (DemandVertex) pair.getFirst());
             });
-    // needs to be called after schedule has been generated
-    this.changeOverCost = computeChangeoverCost(this.schedule, input);
-    this.inventoryCost = computeInventoryCost(this.edges, input.getInventoryCost());
+    final Pair<Double, Double> costs = computeCost(this.production, input);
+    this.changeOverCost = costs.getFirst();
+    this.inventoryCost = costs.getSecond();
   }
 
-  private Schedule(
-      final Collection<Pair<Vertex, Vertex>> edges,
-      final int[] schedule,
-      final double changeOverCost,
-      final double inventoryCost) {
-    this.edges = edges;
-    this.schedule = schedule;
-    this.changeOverCost = changeOverCost;
-    this.inventoryCost = inventoryCost;
-  }
-
-  private static double computeChangeoverCost(final int[] schedule, final Input input) {
-    double cost = 0.;
-    final int[] scheduleWithoutIdleTimeSlots =
-        Arrays.stream(schedule)
-            .filter(type -> type != -1) // remove idle time slots of schedule
-            .toArray();
-    for (int j = 1; j < scheduleWithoutIdleTimeSlots.length; ++j) {
-      final var predType = scheduleWithoutIdleTimeSlots[j - 1];
-      final var currentType = scheduleWithoutIdleTimeSlots[j];
-      cost += input.getChangeOverCost(predType, currentType);
+  private static Pair<Double, Double> computeCost(
+      final Int2ObjectSortedMap<DemandVertex> production, final Input input) {
+    double changeoverCost = 0.;
+    double inventoryCost = 0.;
+    if (production.size() == 1) {
+      final int timeSlot = production.firstIntKey();
+      final DemandVertex vertex = production.get(timeSlot);
+      inventoryCost += (vertex.getTimeSlot() - timeSlot) * input.getInventoryCost();
+    } else if (production.size() >= 2) {
+      final var iter = production.keySet().iterator();
+      int currentSlot = iter.nextInt();
+      int nextSlot;
+      DemandVertex current, next;
+      while (true) {
+        // add inventory cost of current time slot
+        current = production.get(currentSlot);
+        inventoryCost += (current.getTimeSlot() - currentSlot) * input.getInventoryCost();
+        // add change over cost between current and next
+        nextSlot = iter.nextInt();
+        next = production.get(nextSlot);
+        changeoverCost += input.getChangeOverCost(current.getType(), next.getType());
+        if (iter.hasNext()) {
+          currentSlot = nextSlot;
+        } else {
+          inventoryCost += (next.getTimeSlot() - nextSlot) * input.getInventoryCost();
+          break;
+        }
+      }
     }
-    return cost;
-  }
-
-  private static double computeInventoryCost(
-      final Collection<Pair<Vertex, Vertex>> usedEdges, final int inventoryCost) {
-    return usedEdges.stream()
-            .filter(
-                pair ->
-                    pair.getFirst().getVertexType() == Type.DEMAND_VERTEX
-                        && pair.getSecond().getVertexType() == Type.DECISION_VERTEX)
-            .mapToInt(
-                pair -> {
-                  final var demandVertex = (DemandVertex) pair.getFirst();
-                  final var decisionVertex = (DecisionVertex) pair.getSecond();
-                  assert demandVertex.getType() == decisionVertex.getType();
-                  assert demandVertex.getTimeSlot() >= decisionVertex.getTimeSlot();
-                  return demandVertex.getTimeSlot() - decisionVertex.getTimeSlot();
-                })
-            .sum()
-        * inventoryCost;
+    return Pair.of(changeoverCost, inventoryCost);
   }
 
   public double getChangeOverCost() {
@@ -110,22 +102,13 @@ public class Schedule {
 
   /** Computes a new schedule based on given parameters. */
   public Schedule compute(final Cycle cycle, final Input input) {
-    final Set<Pair<Vertex, Vertex>> usedEdges = new HashSet<>(this.edges);
+    final Set<Pair<Vertex, Vertex>> edges = new HashSet<>(this.edges);
     cycle
         .getReverseGraphEdges()
-        .forEach(edge -> usedEdges.remove(Pair.of(edge.getSecond(), edge.getFirst())));
-    usedEdges.addAll(cycle.getOriginalGraphEdges());
-    final int[] newSchedule = Arrays.copyOf(this.schedule, this.schedule.length);
-    cycle
-        .getDeactivatedDecisionVertices()
-        .forEach(vertex -> newSchedule[vertex.getTimeSlot()] = -1);
-    cycle
-        .getActivatedDecisionVertices()
-        .forEach(vertex -> newSchedule[vertex.getTimeSlot()] = vertex.getType());
-    final double newChangeOverCost = computeChangeoverCost(newSchedule, input);
-    final double newInventoryCost = computeInventoryCost(usedEdges, input.getInventoryCost());
-    assert usedEdges.size() == this.edges.size();
-    return new Schedule(usedEdges, newSchedule, newChangeOverCost, newInventoryCost);
+        .forEach(edge -> edges.remove(Pair.of(edge.getSecond(), edge.getFirst())));
+    edges.addAll(cycle.getOriginalGraphEdges());
+    assert edges.size() == this.edges.size();
+    return new Schedule(input, edges);
   }
 
   @Override
@@ -137,18 +120,21 @@ public class Schedule {
       return false;
     }
     final Schedule other = (Schedule) obj;
-    return Arrays.equals(this.schedule, other.schedule)
-        && this.edges.size() == other.edges.size()
-        && this.edges.containsAll(other.edges);
+    return this.length == other.length && this.production.equals(other.production);
   }
 
   @Override
   public int hashCode() {
-    return Arrays.hashCode(schedule);
+    return production.hashCode() + 31 * length;
   }
 
   @Override
   public String toString() {
-    return Arrays.toString(schedule);
+    final List<Integer> schedule =
+        IntStream.generate(() -> -1)
+            .limit(length)
+            .collect(IntArrayList::new, IntArrayList::add, IntArrayList::addAll);
+    production.forEach((k, v) -> schedule.set(k, v.getType()));
+    return schedule.toString();
   }
 }

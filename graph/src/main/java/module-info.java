@@ -7,4 +7,5 @@ module graph {
   requires org.slf4j;
   requires org.jgrapht.core;
   requires input;
+  requires it.unimi.dsi.fastutil;
 }
