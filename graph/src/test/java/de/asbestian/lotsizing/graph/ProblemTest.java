@@ -68,7 +68,7 @@ class ProblemTest {
     assertEquals(expectedInventoryCost, schedule.getInventoryCost());
     assertEquals(expectedChangeOverCost, schedule.getChangeOverCost());
     assertEquals(expectedInventoryCost + expectedChangeOverCost, schedule.getCost());
-    assertEquals(expectedNumberOfEdges, schedule.getEdges().size());
+    assertEquals(expectedNumberOfEdges, problem.getUsedGraphEdges(schedule).size());
   }
 
   @Test

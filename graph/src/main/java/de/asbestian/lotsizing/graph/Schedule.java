@@ -5,11 +5,12 @@ import de.asbestian.lotsizing.graph.vertex.DemandVertex;
 import de.asbestian.lotsizing.graph.vertex.Vertex;
 import de.asbestian.lotsizing.graph.vertex.Vertex.Type;
 import de.asbestian.lotsizing.input.Input;
+import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
+import it.unimi.dsi.fastutil.ints.Int2ObjectMaps;
 import it.unimi.dsi.fastutil.ints.Int2ObjectRBTreeMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectSortedMap;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -80,6 +81,10 @@ public class Schedule {
     return Pair.of(changeoverCost, inventoryCost);
   }
 
+  public Int2ObjectMap<DemandVertex> getSlot2Demand() {
+    return Int2ObjectMaps.unmodifiable(production);
+  }
+
   public double getChangeOverCost() {
     return this.changeOverCost;
   }
@@ -90,14 +95,6 @@ public class Schedule {
 
   public double getCost() {
     return getChangeOverCost() + getInventoryCost();
-  }
-
-  public Collection<Pair<Vertex, Vertex>> getEdges() {
-    return Collections.unmodifiableCollection(edges);
-  }
-
-  public boolean containsEdge(final Vertex source, final Vertex target) {
-    return edges.contains(Pair.of(source, target));
   }
 
   /** Computes a new schedule based on given parameters. */

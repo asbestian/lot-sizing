@@ -106,7 +106,8 @@ public class Runner implements Callable<Integer> {
           schedule.getChangeOverCost(),
           schedule.getInventoryCost());
     } else {
-      final Solver localSearch = new LocalSearchImpl(input, problem, neighbourhoodSize, greatestDescent);
+      final Solver localSearch =
+          new LocalSearchImpl(input, problem, neighbourhoodSize, greatestDescent);
       final Schedule initSchedule =
           randomSchedule
               ? problem.computeRandomSchedule()
@@ -153,7 +154,7 @@ public class Runner implements Callable<Integer> {
   private void visualiseSchedule(
       final Problem problem, final Schedule schedule, final String filename) {
     final Visualisation visualisation = visualiseVertices(problem);
-    visualisation.addEdges(schedule.getEdges());
+    visualisation.addEdges(problem.getUsedGraphEdges(schedule));
     visualisation.saveToJPG(filename);
   }
 }
