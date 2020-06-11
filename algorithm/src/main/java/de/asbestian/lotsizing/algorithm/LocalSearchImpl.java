@@ -16,6 +16,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Random;
 import java.util.Set;
+import java.util.stream.IntStream;
 import org.jgrapht.Graph;
 import org.jgrapht.graph.AsSubgraph;
 import org.jgrapht.graph.DefaultEdge;
@@ -29,7 +30,6 @@ public class LocalSearchImpl extends LocalSearch {
   private static final int SEED = 1;
   private final Random random;
   private final int subResGraphVertexSize;
-  private final double percentage;
   private IntList indices;
   private IntListIterator iter;
   private List<DemandVertex> demand;
@@ -38,13 +38,11 @@ public class LocalSearchImpl extends LocalSearch {
       final Input input,
       final Problem problem,
       final int subResGraphVertexSize,
-      final boolean useGreatestDescent,
-      final double percentage) {
+      final boolean useGreatestDescent) {
     super(input, problem, useGreatestDescent);
     this.random = new Random(SEED);
     this.subResGraphVertexSize = subResGraphVertexSize;
-    this.percentage = percentage;
-    indices = null;
+    indices = createShuffledIndices();
     demand = null;
     iter = null;
   }
@@ -56,7 +54,6 @@ public class LocalSearchImpl extends LocalSearch {
       return resGraph;
     } else if (newResGraph || Objects.isNull(demand)) {
       demand = schedule.getNonIdleProduction();
-      indices = computeIndices();
       iter = indices.iterator();
     }
     final Set<Vertex> subResGraphVertices = computeVerticesInSubResGraph();
@@ -96,15 +93,11 @@ public class LocalSearchImpl extends LocalSearch {
     } while (begin < demand.size());
   }
 
-  private IntArrayList computeIndices() {
-    final int limit =
-        Math.max(
-            1,
-            (int) Math.floor(percentage * (input.getNumProducedItems() - subResGraphVertexSize)));
-    return random
-        .ints(0, input.getNumProducedItems() - subResGraphVertexSize)
-        .distinct()
-        .limit(limit)
-        .collect(IntArrayList::new, IntArrayList::add, IntArrayList::addAll);
+  private IntList createShuffledIndices() {
+    final IntList indices =
+        IntStream.range(0, input.getNumProducedItems() - subResGraphVertexSize)
+            .collect(IntArrayList::new, IntArrayList::add, IntArrayList::addAll);
+    Collections.shuffle(indices, random);
+    return indices;
   }
 }
