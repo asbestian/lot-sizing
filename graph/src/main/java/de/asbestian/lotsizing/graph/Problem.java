@@ -7,13 +7,16 @@ import de.asbestian.lotsizing.graph.vertex.TimeSlotVertex;
 import de.asbestian.lotsizing.graph.vertex.Vertex;
 import de.asbestian.lotsizing.graph.vertex.Vertex.Type;
 import de.asbestian.lotsizing.input.Input;
+import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
@@ -65,7 +68,7 @@ public class Problem {
   private final SimpleDirectedGraph<Vertex, DefaultEdge> graph;
   private final SuperSink superSink;
   private final DemandVertex[] demandVertices;
-  private final Map<Pair<Integer, Integer>, DecisionVertex> decisionVertices;
+  private final Map<Pair<Integer, Integer>, DecisionVertex> decisionVertices; // Pair<Type, Slot>
   private final TimeSlotVertex[] timeSlotVertices;
 
   public Problem(final Input input) {
@@ -117,13 +120,30 @@ public class Problem {
     return superSink;
   }
 
+  public Set<Pair<Vertex, Vertex>> getUsedGraphEdges(final Schedule schedule) {
+    final Set<Pair<Vertex, Vertex>> usedEdges = new HashSet<>();
+    final Int2ObjectMap<DemandVertex> slot2Demand = schedule.getSlot2Demand();
+    for (final var entry : slot2Demand.int2ObjectEntrySet()) {
+      final DemandVertex demandVertex = entry.getValue();
+      final DecisionVertex decisionVertex =
+          decisionVertices.get(Pair.of(demandVertex.getType(), entry.getIntKey()));
+      final TimeSlotVertex timeSlotVertex = timeSlotVertices[decisionVertex.getTimeSlot()];
+      usedEdges.add(Pair.of(demandVertex, decisionVertex));
+      usedEdges.add(Pair.of(decisionVertex, timeSlotVertex));
+      usedEdges.add(Pair.of(timeSlotVertex, superSink));
+    }
+    return usedEdges;
+  }
+
   public Graph<Vertex, DefaultEdge> getResidualGraph(final Schedule schedule) {
     final Graph<Vertex, DefaultEdge> resGraph = new SimpleDirectedGraph<>(DefaultEdge.class);
     graph.vertexSet().forEach(resGraph::addVertex); // add graph vertices to residual graph
+    final Set<Pair<Vertex, Vertex>> edgesInSchedule = getUsedGraphEdges(schedule);
     for (final var edge : graph.edgeSet()) { // add edges with positive residual capacity
       final Vertex source = graph.getEdgeSource(edge);
       final Vertex target = graph.getEdgeTarget(edge);
-      if (schedule.containsEdge(source, target)) { // => reverse edge has positive residual capacity
+      if (edgesInSchedule.contains(
+          Pair.of(source, target))) { // => reverse edge has positive residual capacity
         resGraph.addEdge(target, source);
       } else { // => original has positive residual capacity
         resGraph.addEdge(source, target);

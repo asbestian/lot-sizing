@@ -11,10 +11,10 @@ import de.asbestian.lotsizing.input.Input;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Set;
 import org.jgrapht.alg.util.Pair;
 import org.junit.jupiter.api.Test;
 
@@ -34,8 +34,8 @@ class ScheduleTest {
     final List<DecisionVertex> decisionVertices = problem.getDecisionVertices();
     final List<TimeSlotVertex> timeSlotVertices = problem.getTimeSlotVertices();
     final SuperSink superSink = problem.getSuperSink();
-    final Collection<Pair<Vertex, Vertex>> usedEdges =
-        Arrays.asList(
+    final Set<Pair<Vertex, Vertex>> usedEdges =
+        Set.of(
             Pair.of(demandVertices.get(0), decisionVertices.get(1)),
             Pair.of(demandVertices.get(1), decisionVertices.get(3)),
             Pair.of(demandVertices.get(2), decisionVertices.get(8)),
@@ -50,12 +50,13 @@ class ScheduleTest {
     final int expectedChangeOverCost = 3 + 2;
 
     final Schedule schedule = new Schedule(input, usedEdges);
+    final Set<Pair<Vertex, Vertex>> edgesInSchedule = problem.getUsedGraphEdges(schedule);
 
     assertEquals(expectedSchedule, schedule.toString());
     assertEquals(expectedInventoryCost, schedule.getInventoryCost());
     assertEquals(expectedChangeOverCost, schedule.getChangeOverCost());
     assertEquals(expectedInventoryCost + expectedChangeOverCost, schedule.getCost());
-    assertEquals(usedEdges.size(), schedule.getEdges().size());
+    assertEquals(usedEdges.size(), edgesInSchedule.size());
   }
 
   @Test
@@ -96,7 +97,6 @@ class ScheduleTest {
     assertEquals(expectedInventoryCost, schedule.getInventoryCost());
     assertEquals(expectedChangerOverCost, schedule.getChangeOverCost());
     assertEquals(expectedInventoryCost + expectedChangerOverCost, schedule.getCost());
-    assertEquals(initSchedule.getEdges().size(), schedule.getEdges().size());
   }
 
   @Test
@@ -125,9 +125,12 @@ class ScheduleTest {
             Pair.of(timeSlotVertices.get(2), superSink));
 
     final Schedule schedule = new Schedule(input, usedEdges);
+    final Set<Pair<Vertex, Vertex>> edgesInSchedule = problem.getUsedGraphEdges(schedule);
     Collections.shuffle(usedEdges);
     final Schedule sameSchedule = new Schedule(input, usedEdges);
+    final Set<Pair<Vertex, Vertex>> edgesInSameSchedule = problem.getUsedGraphEdges(sameSchedule);
 
     assertEquals(schedule, sameSchedule);
+    assertEquals(edgesInSchedule, edgesInSameSchedule);
   }
 }
