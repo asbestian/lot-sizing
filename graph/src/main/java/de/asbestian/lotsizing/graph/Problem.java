@@ -91,16 +91,16 @@ public class Problem {
     return graph.edgeSet().size();
   }
 
-  /** Returns unmodifiable list of demand vertices in ascending Id order */
+  /** Returns list of demand vertices in ascending Id order */
   public List<DemandVertex> getDemandVertices() {
-    return List.of(demandVertices);
+    return Arrays.asList(demandVertices);
   }
 
-  /** Returns unmodifiable list of decision vertices in ascending Id order */
+  /** Returns list of decision vertices in ascending Id order */
   public List<DecisionVertex> getDecisionVertices() {
     return decisionVertices.values().stream()
         .sorted(Comparator.comparingInt(Vertex::getId))
-        .collect(Collectors.toUnmodifiableList());
+        .collect(Collectors.toList());
   }
 
   public DecisionVertex getDecisionVertex(final int machineType, final int timeSlot) {
@@ -111,9 +111,9 @@ public class Problem {
     return timeSlotVertices[timeSlot];
   }
 
-  /** Returns unmodifiable list of time slot vertices in ascending Id order */
+  /** Returns list of time slot vertices in ascending Id order */
   public List<TimeSlotVertex> getTimeSlotVertices() {
-    return List.of(timeSlotVertices);
+    return Arrays.asList(timeSlotVertices);
   }
 
   public SuperSink getSuperSink() {

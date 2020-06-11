@@ -46,14 +46,14 @@ abstract class LocalSearch implements Solver {
           currentSchedule.getChangeOverCost(),
           currentSchedule.getInventoryCost());
     }
-    boolean newScheduleFound = false;
-    Graph<Vertex, DefaultEdge> resGraph = problem.getResidualGraph(currentSchedule);
+    Graph<Vertex, DefaultEdge> resGraph = null;
+    boolean newScheduleFound = true;
     while (Duration.between(start, Instant.now()).toSeconds() <= timeLimit) {
       if (newScheduleFound) {
         resGraph = problem.getResidualGraph(currentSchedule);
       }
       final Graph<Vertex, DefaultEdge> subResGraph =
-          createSubResidualGraph(newScheduleFound, resGraph);
+          createSubResidualGraph(newScheduleFound, resGraph, currentSchedule);
       Pair<Boolean, Schedule> ret = useGreatestDescent ? computeBestImprovementSchedule(subResGraph, currentSchedule) : computeFirstImprovementSchedule(subResGraph, currentSchedule);
       newScheduleFound = ret.getFirst();
       currentSchedule = ret.getSecond();
@@ -79,10 +79,12 @@ abstract class LocalSearch implements Solver {
    *
    * @param newResGraph Indicates whether given residual graph is different from last iteration
    * @param resGraph Currently considered residual graph
+   * @param schedule Currently considered (best) schedule
    * @return Subgraph of residual graph
    */
   protected abstract Graph<Vertex, DefaultEdge> createSubResidualGraph(
-      final boolean newResGraph, final Graph<Vertex, DefaultEdge> resGraph);
+      final boolean newResGraph, final Graph<Vertex, DefaultEdge> resGraph,
+      final Schedule schedule);
 
   private Pair<Boolean, Schedule> computeBestImprovementSchedule(final Graph<Vertex, DefaultEdge> subResGraph, final Schedule currentSchedule) {
     final CycleFinder cycleFinder = new CycleFinder();
