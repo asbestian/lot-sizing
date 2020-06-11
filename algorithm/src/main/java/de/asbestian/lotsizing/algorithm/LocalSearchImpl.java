@@ -24,12 +24,14 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /** @author Sebastian Schenker */
-public class LocalSearchImpl extends LocalSearch {
+public class LocalSearchImpl {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(LocalSearchImpl.class);
   private static final int SEED = 1;
   private final Random random;
   private final int subResGraphVertexSize;
+  private final Input input;
+  private final Problem problem;
   private IntList indices;
   private IntListIterator iter;
   private List<DemandVertex> demand;
@@ -39,15 +41,15 @@ public class LocalSearchImpl extends LocalSearch {
       final Problem problem,
       final int subResGraphVertexSize,
       final boolean useGreatestDescent) {
-    super(input, problem, useGreatestDescent);
     this.random = new Random(SEED);
     this.subResGraphVertexSize = subResGraphVertexSize;
+    this.input = input;
+    this.problem = problem;
     indices = createShuffledIndices();
     demand = null;
     iter = null;
   }
 
-  @Override
   protected Graph<Vertex, DefaultEdge> createSubResidualGraph(
       final boolean newResGraph, Graph<Vertex, DefaultEdge> resGraph, final Schedule schedule) {
     if (subResGraphVertexSize >= input.getNumProducedItems()) {

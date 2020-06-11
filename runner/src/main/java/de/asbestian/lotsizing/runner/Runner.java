@@ -1,7 +1,7 @@
 package de.asbestian.lotsizing.runner;
 
 import de.asbestian.lotsizing.algorithm.Enumeration;
-import de.asbestian.lotsizing.algorithm.LocalSearchImpl;
+import de.asbestian.lotsizing.algorithm.LocalSearch;
 import de.asbestian.lotsizing.algorithm.Solver;
 import de.asbestian.lotsizing.graph.Cycle;
 import de.asbestian.lotsizing.graph.Problem;
@@ -106,12 +106,20 @@ public class Runner implements Callable<Integer> {
           schedule.getChangeOverCost(),
           schedule.getInventoryCost());
     } else {
-      final Solver localSearch =
-          new LocalSearchImpl(input, problem, neighbourhoodSize, greatestDescent);
       final Schedule initSchedule =
           randomSchedule
               ? problem.computeRandomSchedule()
               : problem.computeOptimalInventoryCostSchedule();
+      if (LOGGER.isDebugEnabled()) {
+        LOGGER.debug("Initial schedule: {}", initSchedule);
+        LOGGER.debug(
+            "Cost: {} (changeover cost = {}, inventory cost = {})",
+            initSchedule.getCost(),
+            initSchedule.getChangeOverCost(),
+            initSchedule.getInventoryCost());
+      }
+      final Solver localSearch =
+          new LocalSearch(input, problem, neighbourhoodSize, greatestDescent);
       final Schedule schedule = localSearch.search(initSchedule, timeLimit);
       LOGGER.info("Best schedule: {}", schedule);
       LOGGER.info(
