@@ -11,30 +11,22 @@ import it.unimi.dsi.fastutil.ints.Int2ObjectRBTreeMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectSortedMap;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import java.util.Collection;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 import java.util.stream.IntStream;
 import org.jgrapht.alg.util.Pair;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /** @author Sebastian Schenker */
 public class Schedule {
 
-  private static final Logger LOGGER = LoggerFactory.getLogger(Schedule.class);
-  private final Set<Pair<Vertex, Vertex>> edges; // the original graph edges used in schedule
   private final int length; // number of time slots in entire schedule
   private final Int2ObjectSortedMap<DemandVertex> production;
   private final double changeOverCost;
   private final double inventoryCost;
 
   public Schedule(final Input input, final Collection<Pair<Vertex, Vertex>> usedEdges) {
-    this.edges = new HashSet<>();
     this.length = input.getNumTimeSlots();
     this.production = new Int2ObjectRBTreeMap<>();
     usedEdges.stream()
-        .peek(this.edges::add)
         .filter(
             pair ->
                 pair.getFirst().getVertexType() == Type.DEMAND_VERTEX
@@ -44,6 +36,15 @@ public class Schedule {
               final var decisionVertex = (DecisionVertex) pair.getSecond();
               this.production.put(decisionVertex.getTimeSlot(), (DemandVertex) pair.getFirst());
             });
+    final Pair<Double, Double> costs = computeCost(this.production, input);
+    this.changeOverCost = costs.getFirst();
+    this.inventoryCost = costs.getSecond();
+  }
+
+  public Schedule(
+      final Input input, final int length, final Int2ObjectSortedMap<DemandVertex> production) {
+    this.length = length;
+    this.production = production;
     final Pair<Double, Double> costs = computeCost(this.production, input);
     this.changeOverCost = costs.getFirst();
     this.inventoryCost = costs.getSecond();
@@ -99,13 +100,22 @@ public class Schedule {
 
   /** Computes a new schedule based on given parameters. */
   public Schedule compute(final Cycle cycle, final Input input) {
-    final Set<Pair<Vertex, Vertex>> edges = new HashSet<>(this.edges);
+    final Int2ObjectSortedMap<DemandVertex> prod = new Int2ObjectRBTreeMap<>(this.production);
     cycle
-        .getReverseGraphEdges()
-        .forEach(edge -> edges.remove(Pair.of(edge.getSecond(), edge.getFirst())));
-    edges.addAll(cycle.getOriginalGraphEdges());
-    assert edges.size() == this.edges.size();
-    return new Schedule(input, edges);
+        .getDeactivatedDecisionVertices()
+        .forEach(decisionVertex -> prod.remove(decisionVertex.getTimeSlot()));
+    cycle.getOriginalGraphEdges().stream()
+        .filter(
+            edge ->
+                edge.getFirst().getVertexType() == Type.DEMAND_VERTEX
+                    && edge.getSecond().getVertexType() == Type.DECISION_VERTEX)
+        .forEach(
+            edge -> {
+              final var demandVertex = (DemandVertex) edge.getFirst();
+              final var decisionVertex = (DecisionVertex) edge.getSecond();
+              prod.put(decisionVertex.getTimeSlot(), demandVertex);
+            });
+    return new Schedule(input, this.length, prod);
   }
 
   @Override
