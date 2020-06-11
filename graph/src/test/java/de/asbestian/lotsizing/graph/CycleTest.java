@@ -1,7 +1,6 @@
 package de.asbestian.lotsizing.graph;
 
 import static org.junit.jupiter.api.Assertions.assertIterableEquals;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -13,9 +12,7 @@ import de.asbestian.lotsizing.graph.vertex.Vertex.Type;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-import org.jgrapht.Graph;
 import org.jgrapht.alg.util.Pair;
-import org.jgrapht.graph.DefaultEdge;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -40,41 +37,33 @@ class CycleTest {
     when(otherDecisionVertex.getVertexType()).thenReturn(Type.DECISION_VERTEX);
     final List<Vertex> vertices =
         Arrays.asList(demandVertex, decisionVertex, timeSlotVertex, otherDecisionVertex);
-    final Graph<Vertex, DefaultEdge> resGraph = mock(Graph.class);
-    when(resGraph.containsEdge(any(), any())).thenReturn(true);
     cycle = new Cycle(vertices);
   }
 
   @Test
-  void getOriginalGraphEdges() {
-    final List<Pair<Vertex, Vertex>> expectedEdges =
+  void getEdges() {
+    final List<Pair<Vertex, Vertex>> expected =
         Arrays.asList(
-            Pair.of(demandVertex, decisionVertex), Pair.of(decisionVertex, timeSlotVertex));
-
-    assertIterableEquals(expectedEdges, cycle.getOriginalGraphEdges());
-  }
-
-  @Test
-  void getReverseGraphEdges() {
-    final List<Pair<Vertex, Vertex>> expectedEdges =
-        Arrays.asList(
+            Pair.of(demandVertex, decisionVertex),
+            Pair.of(decisionVertex, timeSlotVertex),
             Pair.of(timeSlotVertex, otherDecisionVertex),
             Pair.of(otherDecisionVertex, demandVertex));
 
-    assertIterableEquals(expectedEdges, cycle.getReverseGraphEdges());
+    assertIterableEquals(expected, cycle.getEdges());
   }
 
   @Test
-  void getActivatedDecisionVertices() {
-    final List<DecisionVertex> expectedVertices = Collections.singletonList(decisionVertex);
+  void getActivatedEdges() {
+    final var expected = Collections.singletonList(Pair.of(demandVertex, decisionVertex));
 
-    assertIterableEquals(expectedVertices, cycle.getActivatedDecisionVertices());
+    assertIterableEquals(expected, cycle.getActivatedEdges());
   }
 
   @Test
-  void getDeactivatedDecisionVertices() {
-    final List<DecisionVertex> expectedVertices = Collections.singletonList(otherDecisionVertex);
+  void getDeactivatedEdges() {
+    final var expectedVertices =
+        Collections.singletonList(Pair.of(demandVertex, otherDecisionVertex));
 
-    assertIterableEquals(expectedVertices, cycle.getDeactivatedDecisionVertices());
+    assertIterableEquals(expectedVertices, cycle.getDeactivatedEdges());
   }
 }

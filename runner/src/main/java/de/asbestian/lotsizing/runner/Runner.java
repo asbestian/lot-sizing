@@ -146,8 +146,7 @@ public class Runner implements Callable<Integer> {
 
   private void visualiseCycle(final Problem problem, final Cycle cycle, final String filename) {
     final Visualisation visualisation = visualiseVertices(problem);
-    visualisation.addEdges(cycle.getOriginalGraphEdges());
-    visualisation.addEdges(cycle.getReverseGraphEdges());
+    visualisation.addEdges(cycle.getEdges());
     visualisation.saveToJPG(filename);
   }
 
