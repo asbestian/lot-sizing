@@ -1,6 +1,7 @@
 package de.asbestian.lotsizing.graph;
 
 import de.asbestian.lotsizing.graph.vertex.DecisionVertex;
+import de.asbestian.lotsizing.graph.vertex.DemandVertex;
 import de.asbestian.lotsizing.graph.vertex.Vertex;
 import de.asbestian.lotsizing.graph.vertex.Vertex.Type;
 import java.util.ArrayList;
@@ -14,109 +15,62 @@ import org.slf4j.LoggerFactory;
 public class Cycle {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(Cycle.class);
-
-  private final List<Pair<Vertex, Vertex>> originalGraphEdges;
-  private final List<Pair<Vertex, Vertex>> reverseGraphEdges;
-  private final List<DecisionVertex> activatedDecisionVertices;
-  private final List<DecisionVertex> deactivatedDecisionVertices;
+  private final List<Pair<DemandVertex, DecisionVertex>> activatedEdges;
+  private final List<Pair<DemandVertex, DecisionVertex>> deactivatedEdges;
+  private final List<Pair<Vertex, Vertex>> edges;
 
   public Cycle() {
-    reverseGraphEdges = new ArrayList<>();
-    originalGraphEdges = new ArrayList<>();
-    activatedDecisionVertices = new ArrayList<>();
-    deactivatedDecisionVertices = new ArrayList<>();
+    activatedEdges = new ArrayList<>();
+    deactivatedEdges = new ArrayList<>();
+    edges = new ArrayList<>();
   }
 
   public Cycle(final List<Vertex> vertices) {
     this();
-    final var numVertices = vertices.size();
+    final int numVertices = vertices.size();
     if (numVertices > 1) {
       for (int j = 1; j < numVertices; ++j) {
-        final var source = vertices.get(j - 1);
-        final var target = vertices.get(j);
+        final Vertex source = vertices.get(j - 1);
+        final Vertex target = vertices.get(j);
         addToDataStructures(source, target);
       }
-      final var source = vertices.get(numVertices - 1);
-      final var target = vertices.get(0);
+      final Vertex source = vertices.get(numVertices - 1);
+      final Vertex target = vertices.get(0);
       addToDataStructures(source, target);
-      if (activatedDecisionVertices.size() != deactivatedDecisionVertices.size()) {
-        LOGGER.warn(
-            "Number of activated decision vertices unequal to number of deactivated decision vertices.");
-      }
+    }
+    if (LOGGER.isWarnEnabled() && activatedEdges.size() != deactivatedEdges.size()) {
+      LOGGER.warn("Number of activated pairs unequal to number of deactivated pairs.");
+    }
+  }
+
+  private void addToDataStructures(final Vertex source, final Vertex target) {
+    edges.add(Pair.of(source, target));
+    if (source.getVertexType() == Type.DEMAND_VERTEX
+        && target.getVertexType() == Type.DECISION_VERTEX) {
+      final var demandVertex = (DemandVertex) source;
+      final var decisionVertex = (DecisionVertex) target;
+      activatedEdges.add(Pair.of(demandVertex, decisionVertex));
+    } else if (source.getVertexType() == Type.DECISION_VERTEX
+        && target.getVertexType() == Type.DEMAND_VERTEX) {
+      final var decisionVertex = (DecisionVertex) source;
+      final var demandVertex = (DemandVertex) target;
+      deactivatedEdges.add(Pair.of(demandVertex, decisionVertex));
     }
   }
 
   public boolean isEmpty() {
-    return originalGraphEdges.isEmpty()
-        && reverseGraphEdges.isEmpty()
-        && activatedDecisionVertices.isEmpty()
-        && deactivatedDecisionVertices.isEmpty();
+    return edges.isEmpty();
   }
 
-  private void addToDataStructures(final Vertex source, final Vertex target) {
-    if (isOriginalEdge(source, target)) {
-      originalGraphEdges.add(Pair.of(source, target));
-    } else {
-      reverseGraphEdges.add(Pair.of(source, target));
-    }
-    if (isActivatingEdge(source, target)) {
-      activatedDecisionVertices.add((DecisionVertex) target);
-    } else if (isDeactivatingEdge(source, target)) {
-      deactivatedDecisionVertices.add((DecisionVertex) source);
-    }
+  public List<Pair<Vertex, Vertex>> getEdges() {
+    return Collections.unmodifiableList(edges);
   }
 
-  /**
-   * Checks if edge corresponds to using a decision vertex
-   *
-   * @param source source vertex of the considered edge
-   * @param target target vertex of the considered edge
-   * @return true if source corresponds to demand vertex and target corresponds to decision vertex;
-   *     otherwise, false.
-   */
-  private boolean isActivatingEdge(final Vertex source, final Vertex target) {
-    return source.getVertexType() == Type.DEMAND_VERTEX
-        && target.getVertexType() == Type.DECISION_VERTEX;
+  public List<Pair<DemandVertex, DecisionVertex>> getActivatedEdges() {
+    return Collections.unmodifiableList(activatedEdges);
   }
 
-  /**
-   * Checks if edge correspoinds to not using anymore a decision vertex
-   *
-   * @param source source vertex of the considered edge
-   * @param target target vertex of the considered edge
-   * @return true if source corresponds to decision vertex and target corresponds to demand vertex;
-   */
-  private boolean isDeactivatingEdge(final Vertex source, final Vertex target) {
-    return source.getVertexType() == Type.DECISION_VERTEX
-        && target.getVertexType() == Type.DEMAND_VERTEX;
-  }
-
-  /**
-   * An edge is an edge in the original graph if it connects either a) a demand vertex to a decision
-   * vertex, b) a decision vertex to a time slot vertex or c) a time slot vertex to the super sink.
-   */
-  private boolean isOriginalEdge(final Vertex source, final Vertex target) {
-    return source.getVertexType() == Type.DEMAND_VERTEX
-            && target.getVertexType() == Type.DECISION_VERTEX
-        || source.getVertexType() == Type.DECISION_VERTEX
-            && target.getVertexType() == Type.TIME_SLOT_VERTEX
-        || source.getVertexType() == Type.TIME_SLOT_VERTEX
-            && target.getVertexType() == Type.SUPER_SINK;
-  }
-
-  public List<Pair<Vertex, Vertex>> getOriginalGraphEdges() {
-    return Collections.unmodifiableList(originalGraphEdges);
-  }
-
-  public List<Pair<Vertex, Vertex>> getReverseGraphEdges() {
-    return Collections.unmodifiableList(reverseGraphEdges);
-  }
-
-  public List<DecisionVertex> getActivatedDecisionVertices() {
-    return Collections.unmodifiableList(activatedDecisionVertices);
-  }
-
-  public List<DecisionVertex> getDeactivatedDecisionVertices() {
-    return Collections.unmodifiableList(deactivatedDecisionVertices);
+  public List<Pair<DemandVertex, DecisionVertex>> getDeactivatedEdges() {
+    return Collections.unmodifiableList(deactivatedEdges);
   }
 }

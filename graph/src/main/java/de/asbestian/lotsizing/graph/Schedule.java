@@ -41,7 +41,7 @@ public class Schedule {
     this.inventoryCost = costs.getSecond();
   }
 
-  public Schedule(
+  private Schedule(
       final Input input, final int length, final Int2ObjectSortedMap<DemandVertex> production) {
     this.length = length;
     this.production = production;
@@ -101,20 +101,11 @@ public class Schedule {
   /** Computes a new schedule based on given parameters. */
   public Schedule compute(final Cycle cycle, final Input input) {
     final Int2ObjectSortedMap<DemandVertex> prod = new Int2ObjectRBTreeMap<>(this.production);
+    cycle.getDeactivatedEdges().forEach(pair -> prod.remove(pair.getSecond().getTimeSlot()));
     cycle
-        .getDeactivatedDecisionVertices()
-        .forEach(decisionVertex -> prod.remove(decisionVertex.getTimeSlot()));
-    cycle.getOriginalGraphEdges().stream()
-        .filter(
-            edge ->
-                edge.getFirst().getVertexType() == Type.DEMAND_VERTEX
-                    && edge.getSecond().getVertexType() == Type.DECISION_VERTEX)
-        .forEach(
-            edge -> {
-              final var demandVertex = (DemandVertex) edge.getFirst();
-              final var decisionVertex = (DecisionVertex) edge.getSecond();
-              prod.put(decisionVertex.getTimeSlot(), demandVertex);
-            });
+        .getActivatedEdges()
+        .forEach(pair -> prod.put(pair.getSecond().getTimeSlot(), pair.getFirst()));
+    assert prod.size() == this.production.size();
     return new Schedule(input, this.length, prod);
   }
 
