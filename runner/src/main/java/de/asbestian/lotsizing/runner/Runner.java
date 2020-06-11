@@ -55,13 +55,6 @@ public class Runner implements Callable<Integer> {
   private int neighbourhoodSize;
 
   @Option(
-      names = {"-p", "--percentage"},
-      description =
-          "Percentage of demand vertex set indices covered by local search iteration before shuffling. Default value is ${DEFAULT-VALUE}.",
-      defaultValue = "0.6")
-  private double percentage;
-
-  @Option(
       names = {"-r", "--random"},
       description =
           "Use random schedule as initial schedule. Default is to use the optimal inventory cost schedule is used as initial schedule.",
@@ -114,7 +107,7 @@ public class Runner implements Callable<Integer> {
           schedule.getInventoryCost());
     } else {
       final Solver localSearch =
-          new LocalSearchImpl(input, problem, neighbourhoodSize, greatestDescent, percentage);
+          new LocalSearchImpl(input, problem, neighbourhoodSize, greatestDescent);
       final Schedule initSchedule =
           randomSchedule
               ? problem.computeRandomSchedule()
