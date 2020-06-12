@@ -13,89 +13,80 @@ import it.unimi.dsi.fastutil.ints.IntList;
 import it.unimi.dsi.fastutil.ints.IntListIterator;
 import java.time.Duration;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Random;
 import java.util.Set;
-import java.util.SortedSet;
 import java.util.TreeSet;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
+import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import org.jgrapht.Graph;
-import org.jgrapht.alg.util.Pair;
 import org.jgrapht.graph.AsSubgraph;
 import org.jgrapht.graph.DefaultEdge;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /** @author Sebastian Schenker */
-public class LocalSearch implements Solver {
+public class LocalSearch {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(LocalSearch.class);
-  private static final int QUEUE_CAPACITY = 20;
-  private static final int MAX_SOLUTION_POOL_SIZE = 10;
+  private static final int QUEUE_CAPACITY = 10;
+  private static final int MAX_SOLUTION_POOL_SIZE = 20;
   protected final Input input;
   protected final Problem problem;
   private final int subResGraphVertexSize;
-  protected final boolean useGreatestDescent;
+  private final long timeLimit;
+  private final long iterationTimeLimit;
   private final TreeSet<Schedule> solutionPool;
+  private final ExecutorService executorService;
 
   public LocalSearch(
       final Input input,
       final Problem problem,
       final int subResGraphVertexSize,
-      final boolean useGreatestDescent) {
+      final long timeLimit,
+      final long iterationTimeLimit) {
     this.input = input;
     this.problem = problem;
     this.subResGraphVertexSize = subResGraphVertexSize;
-    this.useGreatestDescent = useGreatestDescent;
+    this.timeLimit = timeLimit;
+    this.iterationTimeLimit = iterationTimeLimit;
     this.solutionPool = new TreeSet<>(Comparator.comparingDouble(Schedule::getCost));
+    this.executorService = Executors.newFixedThreadPool(4);
   }
 
-  @Override
-  public Schedule search(final Schedule initSchedule, double timeLimit) {
+  public Schedule search(final List<Schedule> initSchedules) {
     final Instant start = Instant.now();
-    Iteration iteration = new Iteration(initSchedule);
-    SortedSet<Schedule> improvements = iteration.compute();
-    if (improvements.isEmpty()) {
-      return initSchedule;
-    }
-    solutionPool.addAll(improvements);
-    if (LOGGER.isDebugEnabled()) {
-      improvements.forEach(
-          s ->
-              LOGGER.debug(
-                  "Improvment - Cost: {} (changeover cost = {}, inventory cost = {})",
-                  s.getCost(),
-                  s.getChangeOverCost(),
-                  s.getInventoryCost()));
-    }
-    Iterator<Schedule> iter = solutionPool.iterator();
-    Schedule schedule;
-    while (Duration.between(start, Instant.now()).toSeconds() <= timeLimit && iter.hasNext()) {
-      schedule = iter.next();
-      iteration = new Iteration(schedule);
-      improvements = iteration.compute();
-      if (LOGGER.isDebugEnabled()) {
-        improvements.forEach(
-            s ->
-                LOGGER.debug(
-                    "Improvment - Cost: {} (changeover cost = {}, inventory cost = {})",
-                    s.getCost(),
-                    s.getChangeOverCost(),
-                    s.getInventoryCost()));
+    solutionPool.addAll(initSchedules);
+    List<Future<List<Schedule>>> futures;
+    while (Duration.between(start, Instant.now()).toSeconds() <= timeLimit) {
+      Collection<Callable<List<Schedule>>> callables =
+          solutionPool.stream().map(Iteration::new).collect(Collectors.toList());
+      try {
+        futures = executorService.invokeAll(callables);
+      } catch (final InterruptedException e) {
+        executorService.shutdownNow();
+        Thread.currentThread().interrupt();
+        break;
       }
-      if (!improvements.isEmpty()) {
-        solutionPool.addAll(improvements);
-        while (solutionPool.size() >= MAX_SOLUTION_POOL_SIZE) {
-          solutionPool.pollLast();
-        }
-        iter = solutionPool.iterator();
+      futures.forEach(this::addSchedules);
+      trimSolutionPool();
+      if (LOGGER.isDebugEnabled()) {
+        LOGGER.debug("Current solution pool:");
+        solutionPool.forEach(s -> LOGGER.debug("Cost: {}", s.getCost()));
       }
     }
     if (LOGGER.isDebugEnabled()) {
@@ -104,91 +95,52 @@ public class LocalSearch implements Solver {
     return solutionPool.first();
   }
 
-  /*private Pair<Boolean, Schedule> computeBestImprovementSchedule(
-      final Graph<Vertex, DefaultEdge> subResGraph, final Schedule currentSchedule) {
-    final CycleFinder cycleFinder = new CycleFinder();
-    final List<Cycle> cycles = cycleFinder.computeCycles(subResGraph);
-    final Optional<Schedule> bestSchedule =
-        cycles.stream()
-            .map(cycle -> currentSchedule.compute(cycle, input))
-            .filter(schedule -> schedule.getCost() < currentSchedule.getCost())
-            .min(Comparator.comparingDouble(Schedule::getCost));
-    return bestSchedule.isEmpty()
-        ? Pair.of(false, currentSchedule)
-        : Pair.of(true, bestSchedule.get());
-  }/
-
-  /**
-   * Attempts to compute new (and better) schedule.
-   *
-   * @param subResGraph Subgraph of residual graph whose cycles are considered for finding new
-   *     schedules
-   * @param currentSchedule Currently considered schedule
-   * @return true if better schedule was found
-   */
-  private Pair<Boolean, Schedule> computeFirstImprovementSchedule(
-      final Graph<Vertex, DefaultEdge> subResGraph, final Schedule currentSchedule) {
-    final CycleFinder cycleFinder = new CycleFinder();
-    final BlockingQueue<Cycle> queue = new ArrayBlockingQueue<>(QUEUE_CAPACITY);
-    final Thread computeCycles = new Thread(() -> cycleFinder.computeCycles(subResGraph, queue));
-    computeCycles.start();
-    Cycle cycle;
-    boolean improvement = false;
-    Schedule bestSchedule = currentSchedule;
-    long cycleCounter = 0;
-    do {
-      try {
-        cycle = queue.take();
-      } catch (final InterruptedException e) {
-        computeCycles.interrupt();
-        break;
-      }
-      final Schedule schedule = currentSchedule.compute(cycle, input);
-      ++cycleCounter;
-      if (schedule.getCost() < currentSchedule.getCost()) {
-        computeCycles.interrupt();
-        bestSchedule = schedule;
-        improvement = true;
-        break;
-      }
-    } while (!cycle.isEmpty());
-    if (LOGGER.isTraceEnabled()) {
-      LOGGER.trace("Number of investigated cycles: {}", cycleCounter);
+  private void addSchedules(final Future<List<Schedule>> future) {
+    try {
+      solutionPool.addAll(future.get(iterationTimeLimit, TimeUnit.SECONDS));
+    } catch (TimeoutException e) {
+      LOGGER.debug(e.getMessage());
+      future.cancel(true);
+    } catch (ExecutionException | InterruptedException e) {
+      LOGGER.warn(e.getMessage());
+      Thread.currentThread().interrupt();
     }
-    return Pair.of(improvement, bestSchedule);
   }
 
-  class Iteration {
+  private void trimSolutionPool() {
+    while (solutionPool.size() >= MAX_SOLUTION_POOL_SIZE) {
+      solutionPool.pollLast();
+    }
+  }
+
+  class Iteration implements Callable<List<Schedule>> {
     private static final int SEED = 1;
-    private static final int MAX_SHUFFLE_ATTEMPTS = 10;
+    private static final int NUM_IMPROVEMENT_SCHEDULES = 2;
     private final Random random;
     private final Schedule currentSchedule;
     private final IntList indices;
     private final Graph<Vertex, DefaultEdge> resGraph;
     private final List<DemandVertex> demand;
-    private final SortedSet<Schedule> improvementSchedules;
+    private final List<Schedule> improvementSchedules;
     private IntListIterator iter;
-    private int shuffleCounter;
 
     Iteration(final Schedule schedule) {
       this.random = new Random(SEED);
       this.currentSchedule = schedule;
       this.indices = createShuffledIndices();
-      this.improvementSchedules = new TreeSet<>(Comparator.comparingDouble(Schedule::getCost));
+      this.improvementSchedules = new ArrayList<>();
       this.demand = schedule.getNonIdleProduction();
       this.resGraph = problem.getResidualGraph(schedule);
       this.iter = indices.iterator();
-      this.shuffleCounter = 0;
     }
 
-    SortedSet<Schedule> compute() {
-      while (improvementSchedules.size() <= MAX_SOLUTION_POOL_SIZE
-          && shuffleCounter <= MAX_SHUFFLE_ATTEMPTS) {
+    @Override
+    public List<Schedule> call() {
+      while (improvementSchedules.size() <= NUM_IMPROVEMENT_SCHEDULES
+          && !Thread.currentThread().isInterrupted()) {
         final Graph<Vertex, DefaultEdge> subResGraph = createSubResidualGraph();
-        final CycleFinder cycleFinder = new CycleFinder();
         final BlockingQueue<Cycle> queue = new ArrayBlockingQueue<>(QUEUE_CAPACITY);
-        final Thread computeCycles =
-            new Thread(() -> cycleFinder.computeCycles(subResGraph, queue));
+        final Thread computeCycles = new Thread(new CycleFinder(subResGraph, queue));
         computeCycles.start();
         Cycle cycle;
         do {
@@ -196,15 +148,14 @@ public class LocalSearch implements Solver {
             cycle = queue.take();
           } catch (final InterruptedException e) {
             computeCycles.interrupt();
+            Thread.currentThread().interrupt();
             break;
           }
           final Schedule schedule = currentSchedule.compute(cycle, input);
           if (schedule.getCost() < currentSchedule.getCost()) {
-            computeCycles.interrupt();
             improvementSchedules.add(schedule);
-            break;
           }
-        } while (!cycle.isEmpty());
+        } while (!cycle.isEmpty() && !Thread.currentThread().isInterrupted());
       }
       return improvementSchedules;
     }
@@ -256,7 +207,6 @@ public class LocalSearch implements Solver {
         Collections.shuffle(demand.subList(begin, end));
         begin += subResGraphVertexSize;
       } while (begin < demand.size());
-      ++shuffleCounter;
     }
   }
 }

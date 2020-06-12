@@ -16,17 +16,19 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /** @author Sebastian Schenker */
-public class Enumeration implements Solver {
+public class Enumeration {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(Enumeration.class);
   private static final int QUEUE_CAPACITY = 10;
   private final Input input;
   private final Problem problem;
+  private final long timeLimit;
   private boolean searchSpaceExhausted;
 
-  public Enumeration(final Input input, final Problem problem) {
+  public Enumeration(final Input input, final Problem problem, final long timeLimit) {
     this.input = input;
     this.problem = problem;
+    this.timeLimit = timeLimit;
     this.searchSpaceExhausted = false;
   }
 
@@ -34,8 +36,7 @@ public class Enumeration implements Solver {
     return searchSpaceExhausted;
   }
 
-  @Override
-  public Schedule search(final Schedule initSchedule, double timeLimit) {
+  public Schedule search(final Schedule initSchedule) {
     final Instant start = Instant.now();
     searchSpaceExhausted = false;
     if (LOGGER.isDebugEnabled()) {
@@ -47,20 +48,19 @@ public class Enumeration implements Solver {
           initSchedule.getInventoryCost());
     }
     final Graph<Vertex, DefaultEdge> resGraph = problem.getResidualGraph(initSchedule);
-    final CycleFinder cycleFinder = new CycleFinder();
     final BlockingQueue<Cycle> queue = new ArrayBlockingQueue<>(QUEUE_CAPACITY);
-    final Thread computeCycles = new Thread(() -> cycleFinder.computeCycles(resGraph, queue));
+    final Thread computeCycles = new Thread(new CycleFinder(resGraph, queue));
     computeCycles.start();
     Schedule bestSchedule = initSchedule;
     int numIterations = 0;
-    while (Duration.between(start, Instant.now()).toSeconds() < timeLimit) {
+    while (Duration.between(start, Instant.now()).toSeconds() <= timeLimit) {
       Cycle cycle;
       try {
         cycle = queue.take();
       } catch (final InterruptedException e) {
         LOGGER.info(e.getMessage());
         Thread.currentThread().interrupt();
-        return bestSchedule;
+        break;
       }
       if (cycle.isEmpty()) {
         searchSpaceExhausted = true;

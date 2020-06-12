@@ -4,7 +4,6 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import de.asbestian.lotsizing.graph.Cycle;
 import de.asbestian.lotsizing.graph.vertex.Vertex;
-import java.util.List;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingDeque;
 import org.jgrapht.Graph;
@@ -38,10 +37,10 @@ class CycleFinderTest {
     graph.addEdge(six, four);
     graph.addEdge(three, five);
     graph.addEdge(four, one);
-
-    final CycleFinder cycleFinder = new CycleFinder();
     final BlockingQueue<Cycle> queue = new LinkedBlockingDeque<>(5);
-    cycleFinder.computeCycles(graph, queue);
+    final CycleFinder cycleFinder = new CycleFinder(graph, queue);
+
+    cycleFinder.run();
 
     assertEquals(4, queue.size()); // includes empty graph
   }
@@ -69,10 +68,11 @@ class CycleFinderTest {
     graph.addEdge(eight, five);
     graph.addEdge(four, eight);
     graph.addEdge(five, one);
+    final BlockingQueue<Cycle> queue = new LinkedBlockingDeque<>(5);
+    final CycleFinder cycleFinder = new CycleFinder(graph, queue);
 
-    final CycleFinder cycleFinder = new CycleFinder();
-    final List<Cycle> cycles = cycleFinder.computeCycles(graph);
+    cycleFinder.run();
 
-    assertEquals(3, cycles.size());
+    assertEquals(4, queue.size());
   }
 }

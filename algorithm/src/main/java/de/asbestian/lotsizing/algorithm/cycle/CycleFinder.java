@@ -28,100 +28,29 @@ import org.slf4j.LoggerFactory;
  *
  * @author Sebastian Schenker
  */
-public class CycleFinder {
+public class CycleFinder implements Runnable {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(CycleFinder.class);
+
+  private final Graph<Vertex, DefaultEdge> graph;
+  private final Tarjan tarjan;
+  private final BlockingQueue<Cycle> queue;
   private final Set<Vertex> blocked;
   private final Map<Vertex, Set<Vertex>> blockedMap;
   private final ArrayDeque<Vertex> stack;
-  private Graph<Vertex, DefaultEdge> graph;
-  private Tarjan tarjan;
 
-  public CycleFinder() {
+  public CycleFinder(final Graph<Vertex, DefaultEdge> graph, final BlockingQueue<Cycle> queue) {
+    this.graph = graph;
+    this.tarjan = new Tarjan(graph);
+    this.queue = queue;
     this.blocked = new HashSet<>();
     this.blockedMap = new HashMap<>();
     this.stack = new ArrayDeque<>();
   }
 
-  /**
-   * Computes all simple directed cycles via Johnson's algorithm.
-   *
-   * @param graph Directed graph for which to compute cycles =======
-   * @return Simple directed cycles of underlying graph
-   */
-  public List<Cycle> computeCycles(final Graph<Vertex, DefaultEdge> graph) {
-    this.graph = graph;
-    this.tarjan = new Tarjan(graph);
-    if (graph.vertexSet().isEmpty()) {
-      return Collections.emptyList();
-    }
-    clearState();
-    List<Cycle> cycles = new ArrayList<>();
-    final Iterator<Vertex> iter = graph.vertexSet().iterator();
-    do {
-      int idThreshold = iter.next().getId();
-      final Collection<Set<Vertex>> stronglyConnectedComponents = tarjan.computeSCCs(idThreshold);
-      if (stronglyConnectedComponents.isEmpty()) {
-        return cycles;
-      }
-      final Pair<Graph<Vertex, DefaultEdge>, Vertex> result =
-          getMinVertexSCC(stronglyConnectedComponents);
-      final Graph<Vertex, DefaultEdge> leastSCC = result.getFirst();
-      final Vertex leastVertex = result.getSecond();
-      for (final DefaultEdge edge : leastSCC.outgoingEdgesOf(leastVertex)) {
-        final Vertex target = leastSCC.getEdgeTarget(edge);
-        blocked.remove(target);
-        getBlockedVertices(target);
-      }
-      findCyclesInSCC(leastVertex.getId(), leastVertex, leastSCC, cycles);
-    } while (iter.hasNext());
-    if (LOGGER.isTraceEnabled()) {
-      LOGGER.trace("Number of cycles: {}", cycles.size());
-    }
-    return cycles;
-  }
-
-  private boolean findCyclesInSCC(
-      final int startIndex,
-      final Vertex vertex,
-      final Graph<Vertex, DefaultEdge> scc,
-      final List<Cycle> cycles) {
-    boolean foundCycle = false;
-    stack.push(vertex);
-    blocked.add(vertex);
-    for (final DefaultEdge edge : scc.outgoingEdgesOf(vertex)) {
-      final Vertex target = scc.getEdgeTarget(edge);
-      if (target.getId() == startIndex) { // cycle found
-        final List<Vertex> vertices = new ArrayList<>(stack.size());
-        stack.descendingIterator().forEachRemaining(vertices::add);
-        foundCycle = true;
-        cycles.add(new Cycle(vertices));
-      } else if (!blocked.contains(target)) {
-        final boolean gotCycle = findCyclesInSCC(startIndex, target, scc, cycles);
-        foundCycle = foundCycle || gotCycle;
-      }
-    }
-    if (foundCycle) {
-      unblock(vertex);
-    } else {
-      scc.outgoingEdgesOf(vertex).stream()
-          .map(scc::getEdgeTarget)
-          .forEach(target -> getBlockedVertices(target).add(vertex));
-    }
-    stack.pop();
-    return foundCycle;
-  }
-
-  /**
-   * Computes all simple directed cycles via Johnson's algorithm.
-   *
-   * @param graph Directed graph for which to compute cycles
-   * @param queue Data structure carrying found cycles
-   */
-  public void computeCycles(
-      final Graph<Vertex, DefaultEdge> graph, final BlockingQueue<Cycle> queue) {
-    this.graph = graph;
-    this.tarjan = new Tarjan(graph);
+  /** Computes all simple directed cycles via Johnson's algorithm. */
+  @Override
+  public void run() {
     if (graph.vertexSet().isEmpty()) {
       return;
     }
@@ -143,12 +72,11 @@ public class CycleFinder {
         getBlockedVertices(target);
       }
       try {
-        findCyclesInSCC(leastVertex.getId(), leastVertex, leastSCC, queue);
+        findCyclesInSCC(leastVertex.getId(), leastVertex, leastSCC);
       } catch (InterruptedException e) {
         Thread.currentThread().interrupt();
-        return;
       }
-    } while (iter.hasNext());
+    } while (iter.hasNext() && !Thread.currentThread().isInterrupted());
     try {
       queue.put(new Cycle(Collections.emptyList()));
     } catch (InterruptedException e) {
@@ -187,10 +115,7 @@ public class CycleFinder {
   }
 
   private boolean findCyclesInSCC(
-      final int startIndex,
-      final Vertex vertex,
-      final Graph<Vertex, DefaultEdge> scc,
-      final BlockingQueue<Cycle> queue)
+      final int startIndex, final Vertex vertex, final Graph<Vertex, DefaultEdge> scc)
       throws InterruptedException {
     boolean foundCycle = false;
     stack.push(vertex);
@@ -203,7 +128,7 @@ public class CycleFinder {
         foundCycle = true;
         queue.put(new Cycle(vertices));
       } else if (!blocked.contains(target)) {
-        final boolean gotCycle = findCyclesInSCC(startIndex, target, scc, queue);
+        final boolean gotCycle = findCyclesInSCC(startIndex, target, scc);
         foundCycle = foundCycle || gotCycle;
       }
     }

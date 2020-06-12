@@ -2,7 +2,6 @@ package de.asbestian.lotsizing.runner;
 
 import de.asbestian.lotsizing.algorithm.Enumeration;
 import de.asbestian.lotsizing.algorithm.LocalSearch;
-import de.asbestian.lotsizing.algorithm.Solver;
 import de.asbestian.lotsizing.graph.Cycle;
 import de.asbestian.lotsizing.graph.Problem;
 import de.asbestian.lotsizing.graph.Schedule;
@@ -38,7 +37,13 @@ public class Runner implements Callable<Integer> {
       names = {"-t", "--timeLimit"},
       description = "Time limit (in seconds) of computation. Default value is ${DEFAULT-VALUE}.",
       defaultValue = "600")
-  private double timeLimit;
+  private long timeLimit;
+
+  @Option(
+      names = {"-i", "--iterationTimeLimit"},
+      description = "Time limit (in seconds) of an iteration. Default value is ${DEFAULT-VALUE}.",
+      defaultValue = "10")
+  private long iterationTimeLimit;
 
   @Option(
       names = {"-e", "--enumerate"},
@@ -57,15 +62,9 @@ public class Runner implements Callable<Integer> {
   @Option(
       names = {"-r", "--random"},
       description =
-          "Use random schedule as initial schedule. Default is to use the optimal inventory cost schedule is used as initial schedule.",
+          "Use random schedule as initial schedule. Default is to use the optimal inventory cost schedule as initial schedule.",
       defaultValue = "false")
   private boolean randomSchedule;
-
-  @Option(
-      names = {"-g", "--greatestDescent"},
-      description = "Use greatest descent improvement. Default is to first descent improvement.",
-      defaultValue = "false")
-  private boolean greatestDescent;
 
   @Parameters(paramLabel = "file", description = "The file containing the problem instance.")
   private String file;
@@ -91,12 +90,12 @@ public class Runner implements Callable<Integer> {
     final Problem problem = new Problem(input);
     problem.build();
     if (enumerate) {
-      final Enumeration enumeration = new Enumeration(input, problem);
+      final Enumeration enumeration = new Enumeration(input, problem, timeLimit);
       final Schedule initSchedule =
           randomSchedule
               ? problem.computeRandomSchedule()
               : problem.computeOptimalInventoryCostSchedule();
-      final Schedule schedule = enumeration.search(initSchedule, timeLimit);
+      final Schedule schedule = enumeration.search(initSchedule);
       LOGGER.info(
           "{} schedule: {}", enumeration.isSearchSpaceExhausted() ? "Optimal" : "Best", schedule);
       LOGGER.info(
@@ -106,21 +105,19 @@ public class Runner implements Callable<Integer> {
           schedule.getChangeOverCost(),
           schedule.getInventoryCost());
     } else {
-      final Schedule initSchedule =
-          randomSchedule
-              ? problem.computeRandomSchedule()
-              : problem.computeOptimalInventoryCostSchedule();
-      if (LOGGER.isDebugEnabled()) {
+      final Schedule initOptSchedule = problem.computeOptimalInventoryCostSchedule();
+      final Schedule otherSchedule = problem.computeRandomSchedule();
+      /*if (LOGGER.isDebugEnabled()) {
         LOGGER.debug("Initial schedule: {}", initSchedule);
         LOGGER.debug(
             "Cost: {} (changeover cost = {}, inventory cost = {})",
             initSchedule.getCost(),
             initSchedule.getChangeOverCost(),
             initSchedule.getInventoryCost());
-      }
-      final Solver localSearch =
-          new LocalSearch(input, problem, neighbourhoodSize, greatestDescent);
-      final Schedule schedule = localSearch.search(initSchedule, timeLimit);
+      }*/
+      final LocalSearch localSearch =
+          new LocalSearch(input, problem, neighbourhoodSize, timeLimit, iterationTimeLimit);
+      final Schedule schedule = localSearch.search(List.of(initOptSchedule, otherSchedule));
       LOGGER.info("Best schedule: {}", schedule);
       LOGGER.info(
           "Cost: {} (changeover cost = {}, inventory cost = {})",
