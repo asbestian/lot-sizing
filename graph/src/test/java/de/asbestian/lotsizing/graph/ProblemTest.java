@@ -27,7 +27,6 @@ class ProblemTest {
     final Input input = new FileInput(path);
 
     final Problem problem = new Problem(input);
-    problem.build();
 
     assertEquals(3, problem.getDemandVertices().size());
     assertEquals(9, problem.getDecisionVertices().size());
@@ -42,7 +41,6 @@ class ProblemTest {
     final Input input = new FileInput(path);
 
     final Problem problem = new Problem(input);
-    problem.build();
 
     assertEquals(15, problem.getNumberOfEdges());
   }
@@ -58,7 +56,6 @@ class ProblemTest {
     final int expectedChangeOverCost = 3 + 2;
     final int expectedNumberOfEdges = 9;
     final Problem problem = new Problem(input);
-    problem.build();
 
     final Schedule schedule = problem.computeRandomSchedule();
 
@@ -76,7 +73,6 @@ class ProblemTest {
     assert Files.exists(Paths.get(path));
     final Input input = new FileInput(path);
     final Problem problem = new Problem(input);
-    problem.build();
 
     final Schedule randSchedule = problem.computeRandomSchedule();
     final Schedule inventorySchedule = problem.computeOptimalInventoryCostSchedule();
@@ -91,7 +87,6 @@ class ProblemTest {
     assert Files.exists(Paths.get(path));
     final Input input = new FileInput(path);
     final Problem problem = new Problem(input);
-    problem.build();
 
     final Schedule schedule = problem.computeOptimalInventoryCostSchedule();
     final String expectedSchedule = "[1, 0, -1, 1]";
@@ -111,7 +106,6 @@ class ProblemTest {
     assert Files.exists(Paths.get(path));
     final Input input = new FileInput(path);
     final Problem problem = new Problem(input);
-    problem.build();
     final List<DemandVertex> demandVertices = problem.getDemandVertices();
     final List<DecisionVertex> decisionVertices = problem.getDecisionVertices();
     final List<TimeSlotVertex> timeSlotVertices = problem.getTimeSlotVertices();
