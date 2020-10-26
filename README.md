@@ -1,4 +1,4 @@
-[![Build Status](https://travis-ci.org/asbestian/lot-sizing.svg?branch=master)](https://travis-ci.org/asbestian/lot-sizing)
+![build](https://github.com/asbestian/lot-sizing/workflows/build/badge.svg?branch=master)
 
 About
 -----
