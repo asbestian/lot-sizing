@@ -11,18 +11,15 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 /** @author Sebastian Schenker */
-class InputTest {
+class FileInputTest {
 
-  private Input input;
+  private FileInput input;
 
   @BeforeEach
   void setUp() {
-    /* final URL resourcesPath = getClass().getClassLoader().getResource("gen-ip054.lp");
-     */
     final String path = "src/test/resources/Instance-5timeslots_2types.txt";
     assert Files.exists(Paths.get(path));
-    input = new Input();
-    input.read(path);
+    input = new FileInput(path);
   }
 
   @Test

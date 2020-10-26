@@ -7,6 +7,7 @@ import de.asbestian.lotsizing.graph.Cycle;
 import de.asbestian.lotsizing.graph.Problem;
 import de.asbestian.lotsizing.graph.Schedule;
 import de.asbestian.lotsizing.graph.vertex.Vertex;
+import de.asbestian.lotsizing.input.FileInput;
 import de.asbestian.lotsizing.input.Input;
 import de.asbestian.lotsizing.visualisation.Visualisation;
 import java.nio.file.Files;
@@ -86,8 +87,7 @@ public class Runner implements Callable<Integer> {
       LOGGER.debug("Neighbourhood size: {}", neighbourhoodSize);
       LOGGER.debug("Time limit: {} seconds", timeLimit);
     }
-    final Input input = new Input();
-    input.read(file);
+    final Input input = new FileInput(file);
     final Problem problem = new Problem(input);
     problem.build();
     if (enumerate) {

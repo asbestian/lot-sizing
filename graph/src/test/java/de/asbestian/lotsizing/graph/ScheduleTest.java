@@ -7,6 +7,7 @@ import de.asbestian.lotsizing.graph.vertex.DemandVertex;
 import de.asbestian.lotsizing.graph.vertex.SuperSink;
 import de.asbestian.lotsizing.graph.vertex.TimeSlotVertex;
 import de.asbestian.lotsizing.graph.vertex.Vertex;
+import de.asbestian.lotsizing.input.FileInput;
 import de.asbestian.lotsizing.input.Input;
 import java.nio.file.Files;
 import java.nio.file.Paths;
@@ -26,8 +27,7 @@ class ScheduleTest {
     final String path =
         "src/test/resources/Instance-3timeslots_3types.txt"; // instance has one feasible solution
     assert Files.exists(Paths.get(path));
-    final Input input = new Input();
-    input.read(path);
+    final Input input = new FileInput(path);
     final Problem problem = new Problem(input);
     problem.build();
     final List<DemandVertex> demandVertices = problem.getDemandVertices();
@@ -64,8 +64,7 @@ class ScheduleTest {
     final String path =
         "src/test/resources/Instance-4timeslots_2types.txt"; // instance has two feasible solutions
     assert Files.exists(Paths.get(path));
-    final Input input = new Input();
-    input.read(path);
+    final Input input = new FileInput(path);
     final Problem problem = new Problem(input);
     problem.build();
     final Schedule initSchedule = problem.computeRandomSchedule();
@@ -104,8 +103,7 @@ class ScheduleTest {
     final String path =
         "src/test/resources/Instance-3timeslots_3types.txt"; // instance has one feasible solution
     assert Files.exists(Paths.get(path));
-    final Input input = new Input();
-    input.read(path);
+    final Input input = new FileInput(path);
     final Problem problem = new Problem(input);
     problem.build();
     final List<DemandVertex> demandVertices = problem.getDemandVertices();
