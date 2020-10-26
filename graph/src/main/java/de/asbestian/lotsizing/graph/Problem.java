@@ -80,9 +80,6 @@ public class Problem {
     this.demandVertices = new DemandVertex[input.getNumProducedItems()];
     this.decisionVertices = new HashMap<>();
     this.timeSlotVertices = new TimeSlotVertex[input.getNumTimeSlots()];
-  }
-
-  public void build() {
     addVertices();
     addEdges();
   }

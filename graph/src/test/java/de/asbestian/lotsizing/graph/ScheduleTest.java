@@ -29,7 +29,6 @@ class ScheduleTest {
     assert Files.exists(Paths.get(path));
     final Input input = new FileInput(path);
     final Problem problem = new Problem(input);
-    problem.build();
     final List<DemandVertex> demandVertices = problem.getDemandVertices();
     final List<DecisionVertex> decisionVertices = problem.getDecisionVertices();
     final List<TimeSlotVertex> timeSlotVertices = problem.getTimeSlotVertices();
@@ -66,7 +65,6 @@ class ScheduleTest {
     assert Files.exists(Paths.get(path));
     final Input input = new FileInput(path);
     final Problem problem = new Problem(input);
-    problem.build();
     final Schedule initSchedule = problem.computeRandomSchedule();
     assertEquals("[1, 0, 1, -1]", initSchedule.toString());
 
@@ -105,7 +103,6 @@ class ScheduleTest {
     assert Files.exists(Paths.get(path));
     final Input input = new FileInput(path);
     final Problem problem = new Problem(input);
-    problem.build();
     final List<DemandVertex> demandVertices = problem.getDemandVertices();
     final List<DecisionVertex> decisionVertices = problem.getDecisionVertices();
     final List<TimeSlotVertex> timeSlotVertices = problem.getTimeSlotVertices();

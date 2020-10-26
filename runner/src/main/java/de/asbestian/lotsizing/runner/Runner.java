@@ -89,7 +89,6 @@ public class Runner implements Callable<Integer> {
     }
     final Input input = new FileInput(file);
     final Problem problem = new Problem(input);
-    problem.build();
     if (enumerate) {
       final Enumeration enumeration = new Enumeration(input, problem);
       final Schedule initSchedule =
