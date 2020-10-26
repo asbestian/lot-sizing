@@ -1,116 +1,22 @@
 package de.asbestian.lotsizing.input;
 
-import java.io.BufferedReader;
-import java.io.FileReader;
-import java.util.ArrayDeque;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.stream.Collectors;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import java.util.List;
 
-/**
- * This class handles the file input. An example input looks like:
- *
- * <pre>
- *   5  // number of time slots
- *   2  // number of machine types
- *   0 1 0 0 1  // demand of first type
- *   1 0 0 0 1  // demand of second type
- *   2  // inventory cost
- *   0 5  // changeover cost from first type to second type
- *   3 0  // changeover cost from second type to first type
- * </pre>
- *
- * @author Sebastian Schenker
- */
-public class Input {
+/** @author Sebastian Schenker */
+public interface Input {
 
-  private static final Logger LOGGER = LoggerFactory.getLogger(Input.class);
+  int getNumTimeSlots();
 
-  private int numTimeSlots;
-  private int numTypes;
-  private int inventoryCost;
-  private final ArrayList<ArrayList<Integer>> demand;
-  private final ArrayList<ArrayList<Integer>> changeover_cost;
-  private ArrayList<Integer> overallDemandPerType;
+  int getNumTypes();
 
-  public Input() {
-    demand = new ArrayList<>();
-    changeover_cost = new ArrayList<>();
-  }
+  int getInventoryCost();
 
-  public void read(final String file) {
-    final ArrayDeque<String> input = new ArrayDeque<>();
-    try (final BufferedReader bf = new BufferedReader(new FileReader(file))) {
-      bf.lines().filter(line -> !line.isBlank()).forEachOrdered(input::addLast);
-    } catch (final Exception e) {
-      e.printStackTrace();
-    }
-    numTimeSlots = readSingleValueLine(input.removeFirst());
-    LOGGER.info("Number of time slots: {}", numTimeSlots);
-    numTypes = readSingleValueLine(input.removeFirst());
-    LOGGER.info("Number of types: {}", numTypes);
-    for (int type = 0; type < numTypes; ++type) {
-      final ArrayList<Integer> type_demand = readMultipleValueLine(input.removeFirst());
-      assert type_demand.size() == numTimeSlots;
-      demand.add(type_demand);
-    }
-    inventoryCost = readSingleValueLine(input.removeFirst());
-    LOGGER.info("Inventory cost: {}", inventoryCost);
-    for (int type = 0; type < numTypes; ++type) {
-      final ArrayList<Integer> cost = readMultipleValueLine(input.removeFirst());
-      assert cost.size() == numTypes;
-      changeover_cost.add(cost);
-    }
-    overallDemandPerType = computeNumProducedTypeItems();
-    LOGGER.info("Overall demand per type: {}", overallDemandPerType);
-  }
+  int getOverallDemandPerType(final int type);
 
-  private ArrayList<Integer> computeNumProducedTypeItems() {
-    return demand.stream()
-        .mapToInt(a -> a.stream().mapToInt(i -> i).sum())
-        .boxed()
-        .collect(Collectors.toCollection(ArrayList::new));
-  }
+  int getNumProducedItems();
 
-  private static int readSingleValueLine(final String line) {
-    return Integer.parseInt(line);
-  }
-
-  private static ArrayList<Integer> readMultipleValueLine(final String line) {
-    final String[] values = line.split(" ");
-    return Arrays.stream(values)
-        .map(Integer::valueOf)
-        .collect(Collectors.toCollection(ArrayList::new));
-  }
-
-  public int getNumTimeSlots() {
-    return numTimeSlots;
-  }
-
-  public int getNumTypes() {
-    return numTypes;
-  }
-
-  public int getInventoryCost() {
-    return inventoryCost;
-  }
-
-  public int getOverallDemandPerType(final int type) {
-    return overallDemandPerType.get(type);
-  }
-
-  public int getNumProducedItems() {
-    return overallDemandPerType.stream().mapToInt(i -> i).sum();
-  }
-
-  public ArrayList<Integer> getDemand(final int type) {
-    return demand.get(type);
-  }
+  List<Integer> getDemand(final int type);
 
   /** Returns the change over cost from predType to succType; */
-  public int getChangeOverCost(final int predType, final int succType) {
-    return changeover_cost.get(predType).get(succType);
-  }
+  int getChangeOverCost(final int predType, final int succType);
 }

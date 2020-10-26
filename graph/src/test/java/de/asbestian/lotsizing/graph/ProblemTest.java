@@ -7,6 +7,7 @@ import de.asbestian.lotsizing.graph.vertex.DemandVertex;
 import de.asbestian.lotsizing.graph.vertex.SuperSink;
 import de.asbestian.lotsizing.graph.vertex.TimeSlotVertex;
 import de.asbestian.lotsizing.graph.vertex.Vertex;
+import de.asbestian.lotsizing.input.FileInput;
 import de.asbestian.lotsizing.input.Input;
 import java.nio.file.Files;
 import java.nio.file.Paths;
@@ -23,8 +24,7 @@ class ProblemTest {
     final String path =
         "src/test/resources/Instance-3timeslots_3types.txt"; // instance has one feasible solution
     assert Files.exists(Paths.get(path));
-    final Input input = new Input();
-    input.read(path);
+    final Input input = new FileInput(path);
 
     final Problem problem = new Problem(input);
     problem.build();
@@ -39,8 +39,7 @@ class ProblemTest {
     final String path =
         "src/test/resources/Instance-3timeslots_3types.txt"; // instance has one feasible solution
     assert Files.exists(Paths.get(path));
-    final Input input = new Input();
-    input.read(path);
+    final Input input = new FileInput(path);
 
     final Problem problem = new Problem(input);
     problem.build();
@@ -53,8 +52,7 @@ class ProblemTest {
     final String path =
         "src/test/resources/Instance-3timeslots_3types.txt"; // instance has one feasible solution
     assert Files.exists(Paths.get(path));
-    final Input input = new Input();
-    input.read(path);
+    final Input input = new FileInput(path);
     final String expectedSchedule = "[1, 0, 2]";
     final int expectedInventoryCost = 0;
     final int expectedChangeOverCost = 3 + 2;
@@ -76,8 +74,7 @@ class ProblemTest {
     final String path =
         "src/test/resources/Instance-3timeslots_3types.txt"; // instance has one feasible solution
     assert Files.exists(Paths.get(path));
-    final Input input = new Input();
-    input.read(path);
+    final Input input = new FileInput(path);
     final Problem problem = new Problem(input);
     problem.build();
 
@@ -92,8 +89,7 @@ class ProblemTest {
     final String path =
         "src/test/resources/Instance-4timeslots_2types.txt"; // instance has two feasible solutions
     assert Files.exists(Paths.get(path));
-    final Input input = new Input();
-    input.read(path);
+    final Input input = new FileInput(path);
     final Problem problem = new Problem(input);
     problem.build();
 
@@ -113,8 +109,7 @@ class ProblemTest {
     final String path =
         "src/test/resources/Instance-3timeslots_3types.txt"; // instance has one feasible solution
     assert Files.exists(Paths.get(path));
-    final Input input = new Input();
-    input.read(path);
+    final Input input = new FileInput(path);
     final Problem problem = new Problem(input);
     problem.build();
     final List<DemandVertex> demandVertices = problem.getDemandVertices();
