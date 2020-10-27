@@ -21,6 +21,7 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
+import javax.inject.Inject;
 import org.jgrapht.Graph;
 import org.jgrapht.alg.flow.PushRelabelMFImpl;
 import org.jgrapht.alg.flow.mincost.CapacityScalingMinimumCostFlow;
@@ -71,6 +72,7 @@ public class Problem {
   private final Map<Pair<Integer, Integer>, DecisionVertex> decisionVertices; // Pair<Type, Slot>
   private final TimeSlotVertex[] timeSlotVertices;
 
+  @Inject
   public Problem(final Input input) {
     this.input = input;
     this.idSupplier = new IdSupplier();

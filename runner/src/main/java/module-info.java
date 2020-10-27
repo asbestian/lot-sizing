@@ -8,4 +8,5 @@ module runner {
   requires org.slf4j;
   requires info.picocli;
   requires org.jgrapht.core;
+  requires dagger;
 }

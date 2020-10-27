@@ -4,6 +4,7 @@ import de.asbestian.lotsizing.algorithm.Enumeration;
 import de.asbestian.lotsizing.algorithm.LocalSearchImpl;
 import de.asbestian.lotsizing.algorithm.Solver;
 import de.asbestian.lotsizing.graph.Cycle;
+import de.asbestian.lotsizing.graph.DaggerProblemFactory;
 import de.asbestian.lotsizing.graph.Problem;
 import de.asbestian.lotsizing.graph.Schedule;
 import de.asbestian.lotsizing.graph.vertex.Vertex;
@@ -39,6 +40,7 @@ public class Runner {
       LOGGER.debug("Neighbourhood size: {}", cmdArgs.neighbourhoodSize);
       LOGGER.debug("Time limit: {} seconds", cmdArgs.timeLimit);
     }
+    Problem prob = DaggerProblemFactory.builder().fileName(cmdArgs.file).build().problem();
     final Input input = new FileInput(cmdArgs.file);
     final Problem problem = new Problem(input);
     final Schedule initSchedule =

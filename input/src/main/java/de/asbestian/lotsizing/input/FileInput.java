@@ -8,6 +8,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
+import javax.inject.Inject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -41,6 +42,7 @@ public class FileInput implements Input {
    *
    * @param file the path to the input file
    */
+  @Inject
   public FileInput(final String file) {
     demand = new ArrayList<>();
     changeover_cost = new ArrayList<>();
