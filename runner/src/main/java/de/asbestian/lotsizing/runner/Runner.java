@@ -13,7 +13,6 @@ import de.asbestian.lotsizing.visualisation.Visualisation;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.List;
-import java.util.concurrent.Callable;
 import java.util.stream.Collectors;
 import org.jgrapht.Graph;
 import org.jgrapht.alg.util.Pair;
@@ -21,81 +20,34 @@ import org.jgrapht.graph.DefaultEdge;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import picocli.CommandLine;
-import picocli.CommandLine.Command;
-import picocli.CommandLine.Option;
-import picocli.CommandLine.Parameters;
 
 /** @author Sebastian Schenker */
-@Command(
-    name = "graph-opt",
-    mixinStandardHelpOptions = true,
-    version = "1.0",
-    description = "Lot sizing optimisation via graph algorithms.")
-public class Runner implements Callable<Integer> {
+public class Runner {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(Runner.class);
 
-  @Option(
-      names = {"-t", "--timeLimit"},
-      description = "Time limit (in seconds) of computation. Default value is ${DEFAULT-VALUE}.",
-      defaultValue = "600")
-  private double timeLimit;
-
-  @Option(
-      names = {"-e", "--enumerate"},
-      description =
-          "Attempt full enumeration of the search space. (Note that given time limit applies.)",
-      defaultValue = "false")
-  private boolean enumerate;
-
-  @Option(
-      names = {"-n", "--neighbourhood"},
-      description =
-          "Size of initial demand vertex neighbourhood used in local search procedure. Default value is ${DEFAULT-VALUE}.",
-      defaultValue = "4")
-  private int neighbourhoodSize;
-
-  @Option(
-      names = {"-r", "--random"},
-      description =
-          "Use random schedule as initial schedule. Default is to use the optimal inventory cost schedule is used as initial schedule.",
-      defaultValue = "false")
-  private boolean randomSchedule;
-
-  @Option(
-      names = {"-g", "--greatestDescent"},
-      description = "Use greatest descent improvement. Default is to first descent improvement.",
-      defaultValue = "false")
-  private boolean greatestDescent;
-
-  @Parameters(paramLabel = "file", description = "The file containing the problem instance.")
-  private String file;
-
   public static void main(final String... args) {
-    final int exitCode = new CommandLine(new Runner()).execute(args);
-    System.exit(exitCode);
-  }
-
-  @Override
-  public Integer call() {
-    if (!Files.exists(Paths.get(file))) {
+    CmdArgs cmdArgs = new CmdArgs();
+    new CommandLine(cmdArgs).parseArgs(args);
+    if (!Files.exists(Paths.get(cmdArgs.file))) {
       System.err.println("Given file cannot be found.");
-      return 1;
+      System.exit(1);
     }
     if (LOGGER.isDebugEnabled()) {
-      LOGGER.debug("Initial schedule: {}", randomSchedule ? "random" : "optimal inventory cost");
-      LOGGER.debug("Neighbourhood size: {}", neighbourhoodSize);
-      LOGGER.debug("Time limit: {} seconds", timeLimit);
+      LOGGER.debug(
+          "Initial schedule: {}", cmdArgs.randomSchedule ? "random" : "optimal inventory cost");
+      LOGGER.debug("Neighbourhood size: {}", cmdArgs.neighbourhoodSize);
+      LOGGER.debug("Time limit: {} seconds", cmdArgs.timeLimit);
     }
-    final Input input = new FileInput(file);
+    final Input input = new FileInput(cmdArgs.file);
     final Problem problem = new Problem(input);
-    if (enumerate) {
+    if (cmdArgs.enumerate) {
       final Enumeration enumeration = new Enumeration(input, problem);
       final Schedule initSchedule =
-          randomSchedule
+          cmdArgs.randomSchedule
               ? problem.computeRandomSchedule()
               : problem.computeOptimalInventoryCostSchedule();
-      final Schedule schedule = enumeration.search(initSchedule, timeLimit);
+      final Schedule schedule = enumeration.search(initSchedule, cmdArgs.timeLimit);
       LOGGER.info(
           "{} schedule: {}", enumeration.isSearchSpaceExhausted() ? "Optimal" : "Best", schedule);
       LOGGER.info(
@@ -106,12 +58,12 @@ public class Runner implements Callable<Integer> {
           schedule.getInventoryCost());
     } else {
       final Solver localSearch =
-          new LocalSearchImpl(input, problem, neighbourhoodSize, greatestDescent);
+          new LocalSearchImpl(input, problem, cmdArgs.neighbourhoodSize, cmdArgs.greatestDescent);
       final Schedule initSchedule =
-          randomSchedule
+          cmdArgs.randomSchedule
               ? problem.computeRandomSchedule()
               : problem.computeOptimalInventoryCostSchedule();
-      final Schedule schedule = localSearch.search(initSchedule, timeLimit);
+      final Schedule schedule = localSearch.search(initSchedule, cmdArgs.timeLimit);
       LOGGER.info("Best schedule: {}", schedule);
       LOGGER.info(
           "Cost: {} (changeover cost = {}, inventory cost = {})",
@@ -119,7 +71,7 @@ public class Runner implements Callable<Integer> {
           schedule.getChangeOverCost(),
           schedule.getInventoryCost());
     }
-    return 0;
+    System.exit(0);
   }
 
   private Visualisation visualiseVertices(final Problem problem) {
