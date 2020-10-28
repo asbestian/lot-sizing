@@ -1,4 +1,4 @@
-![build](https://github.com/asbestian/lot-sizing/workflows/build/badge.svg?branch=master)
+![build](https://github.com/asbestian/lot-sizing/workflows/build/badge.svg)
 
 About
 -----

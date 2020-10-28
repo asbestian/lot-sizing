@@ -23,6 +23,10 @@
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
     <maven.compiler.release>11</maven.compiler.release>
+    <sonar.projectKey>asbestian_lot-sizing</sonar.projectKey>
+    <sonar.moduleKey>${project.artifactId}</sonar.moduleKey>
+    <sonar.organization>asbestian</sonar.organization>
+    <sonar.host.url>https://sonarcloud.io</sonar.host.url>
   </properties>
 
   <dependencies>
@@ -60,7 +64,6 @@
       <version>2.2</version>
       <scope>test</scope>
     </dependency>
-
   </dependencies>
 
   <build>
