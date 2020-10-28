@@ -41,36 +41,22 @@ public class Runner {
     }
     final Input input = new FileInput(cmdArgs.file);
     final Problem problem = new Problem(input);
-    if (cmdArgs.enumerate) {
-      final Enumeration enumeration = new Enumeration(input, problem);
-      final Schedule initSchedule =
-          cmdArgs.randomSchedule
-              ? problem.computeRandomSchedule()
-              : problem.computeOptimalInventoryCostSchedule();
-      final Schedule schedule = enumeration.search(initSchedule, cmdArgs.timeLimit);
-      LOGGER.info(
-          "{} schedule: {}", enumeration.isSearchSpaceExhausted() ? "Optimal" : "Best", schedule);
-      LOGGER.info(
-          "{} cost: {} (changeover cost = {}, inventory cost = {})",
-          enumeration.isSearchSpaceExhausted() ? "Optimal" : "Best",
-          schedule.getCost(),
-          schedule.getChangeOverCost(),
-          schedule.getInventoryCost());
-    } else {
-      final Solver localSearch =
-          new LocalSearchImpl(input, problem, cmdArgs.neighbourhoodSize, cmdArgs.greatestDescent);
-      final Schedule initSchedule =
-          cmdArgs.randomSchedule
-              ? problem.computeRandomSchedule()
-              : problem.computeOptimalInventoryCostSchedule();
-      final Schedule schedule = localSearch.search(initSchedule, cmdArgs.timeLimit);
-      LOGGER.info("Best schedule: {}", schedule);
-      LOGGER.info(
-          "Cost: {} (changeover cost = {}, inventory cost = {})",
-          schedule.getCost(),
-          schedule.getChangeOverCost(),
-          schedule.getInventoryCost());
-    }
+    final Schedule initSchedule =
+        cmdArgs.randomSchedule
+            ? problem.computeRandomSchedule()
+            : problem.computeOptimalInventoryCostSchedule();
+    final Solver solver =
+        cmdArgs.enumerate
+            ? new Enumeration(input, problem)
+            : new LocalSearchImpl(
+                input, problem, cmdArgs.neighbourhoodSize, cmdArgs.greatestDescent);
+    final Schedule schedule = solver.search(initSchedule, cmdArgs.timeLimit);
+    LOGGER.info("Best found schedule: {}", schedule);
+    LOGGER.info(
+        "cost: {} (changeover cost = {}, inventory cost = {})",
+        schedule.getCost(),
+        schedule.getChangeOverCost(),
+        schedule.getInventoryCost());
     System.exit(0);
   }
 
