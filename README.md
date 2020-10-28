@@ -1,4 +1,4 @@
-![build](https://github.com/asbestian/lot-sizing/workflows/build/badge.svg)
+![Build](https://github.com/asbestian/lot-sizing/workflows/Build/badge.svg)
 
 About
 -----
