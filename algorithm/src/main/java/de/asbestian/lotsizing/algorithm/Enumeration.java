@@ -10,12 +10,15 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
+import javax.inject.Inject;
+import javax.inject.Singleton;
 import org.jgrapht.Graph;
 import org.jgrapht.graph.DefaultEdge;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /** @author Sebastian Schenker */
+@Singleton
 public class Enumeration implements Solver {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(Enumeration.class);
@@ -24,6 +27,7 @@ public class Enumeration implements Solver {
   private final Problem problem;
   private boolean searchSpaceExhausted;
 
+  @Inject
   public Enumeration(final Input input, final Problem problem) {
     this.input = input;
     this.problem = problem;

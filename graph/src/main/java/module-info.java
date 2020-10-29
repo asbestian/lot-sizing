@@ -8,6 +8,6 @@ module graph {
   requires org.jgrapht.core;
   requires input;
   requires it.unimi.dsi.fastutil;
-  requires dagger;
   requires javax.inject;
+  requires dagger;
 }

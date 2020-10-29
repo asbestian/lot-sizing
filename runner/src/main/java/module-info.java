@@ -9,4 +9,5 @@ module runner {
   requires info.picocli;
   requires org.jgrapht.core;
   requires dagger;
+  requires javax.inject;
 }

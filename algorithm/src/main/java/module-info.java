@@ -13,4 +13,6 @@ module algorithm {
   requires org.slf4j;
   requires it.unimi.dsi.fastutil;
   requires com.google.common;
+  requires javax.inject;
+  requires dagger;
 }

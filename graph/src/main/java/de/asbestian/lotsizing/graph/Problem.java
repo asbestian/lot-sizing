@@ -22,6 +22,7 @@ import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import javax.inject.Inject;
+import javax.inject.Singleton;
 import org.jgrapht.Graph;
 import org.jgrapht.alg.flow.PushRelabelMFImpl;
 import org.jgrapht.alg.flow.mincost.CapacityScalingMinimumCostFlow;
@@ -51,6 +52,7 @@ import org.slf4j.LoggerFactory;
  *
  * @author Sebastian Schenker
  */
+@Singleton
 public class Problem {
 
   private static class IdSupplier implements Supplier<Integer> {
