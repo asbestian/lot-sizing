@@ -8,6 +8,8 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
+import javax.inject.Inject;
+import javax.inject.Singleton;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -26,6 +28,7 @@ import org.slf4j.LoggerFactory;
  *
  * @author Sebastian Schenker
  */
+@Singleton
 public class FileInput implements Input {
   private static final Logger LOGGER = LoggerFactory.getLogger(Input.class);
 
@@ -41,6 +44,7 @@ public class FileInput implements Input {
    *
    * @param file the path to the input file
    */
+  @Inject
   public FileInput(final String file) {
     demand = new ArrayList<>();
     changeover_cost = new ArrayList<>();

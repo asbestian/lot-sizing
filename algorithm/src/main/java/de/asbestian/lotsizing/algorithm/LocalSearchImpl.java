@@ -17,6 +17,7 @@ import java.util.Objects;
 import java.util.Random;
 import java.util.Set;
 import java.util.stream.IntStream;
+import javax.inject.Inject;
 import org.jgrapht.Graph;
 import org.jgrapht.graph.AsSubgraph;
 import org.jgrapht.graph.DefaultEdge;
@@ -34,6 +35,7 @@ public class LocalSearchImpl extends LocalSearch {
   private IntListIterator iter;
   private List<DemandVertex> demand;
 
+  @Inject
   public LocalSearchImpl(
       final Input input,
       final Problem problem,
