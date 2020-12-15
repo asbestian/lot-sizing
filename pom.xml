@@ -27,6 +27,7 @@
     <sonar.moduleKey>${project.artifactId}</sonar.moduleKey>
     <sonar.organization>asbestian</sonar.organization>
     <sonar.host.url>https://sonarcloud.io</sonar.host.url>
+    <checkstyle.config.location>google_checks.xml</checkstyle.config.location>
   </properties>
 
   <dependencies>
@@ -88,6 +89,7 @@
             </annotationProcessorPaths>
           </configuration>
         </plugin>
+
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-clean-plugin</artifactId>
@@ -101,6 +103,33 @@
               </goals>
             </execution>
           </executions>
+        </plugin>
+
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-checkstyle-plugin</artifactId>
+          <version>3.1.1</version>
+          <executions>
+            <execution>
+              <id>validate</id>
+              <phase>validate</phase>
+              <configuration>
+                <encoding>UTF-8</encoding>
+                <consoleOutput>true</consoleOutput>
+                <failsOnError>true</failsOnError>
+              </configuration>
+              <goals>
+                <goal>check</goal>
+              </goals>
+            </execution>
+          </executions>
+          <dependencies>
+            <dependency>
+              <groupId>com.puppycrawl.tools</groupId>
+              <artifactId>checkstyle</artifactId>
+              <version>8.36</version>
+            </dependency>
+          </dependencies>
         </plugin>
 
         <plugin>
